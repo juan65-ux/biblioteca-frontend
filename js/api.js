@@ -1,7 +1,7 @@
 // ── CONFIGURACIÓN BASE ─────────────────────────────────────────
 const API_URL = ['localhost', '127.0.0.1', ''].includes(window.location.hostname) || window.location.protocol === 'file:'
   ? 'http://localhost:3000/api'
-  : 'https://TU-APP.onrender.com/api';  // ← CAMBIAR por tu URL real de Render
+  : 'https://biblioteca-backend-production-c406.up.railway.app/api';
 
 // ── CIERRE AUTOMÁTICO DE SESIÓN POR INACTIVIDAD (30 min) ───────
 const TIEMPO_INACTIVIDAD_MS = 30 * 60 * 1000; // 30 minutos
@@ -36,7 +36,7 @@ reiniciarTemporizador();
 const iniciarRecordatorioCierre = () => {
   const usuarioData = sessionStorage.getItem('usuario');
   if (!usuarioData) return;
-  
+
   try {
     const usuarioActual = JSON.parse(usuarioData);
     if (usuarioActual.rol !== 'admin') return;
@@ -51,7 +51,7 @@ const iniciarRecordatorioCierre = () => {
         if (ultimoAviso !== hoy) {
           // Mostrar notificación grande
           alert('🔔 RECORDATORIO DE CIERRE (9:00 PM)\n\nLa jornada termina a las 9:30 PM. Por favor, revisa el "Historial completo" o los "Préstamos en curso" para verificar qué computadores o equipos faltan por devolver.');
-          
+
           // Guardar para no repetir el aviso hoy
           localStorage.setItem('ultimoRecordatorioCierre', hoy);
         }
