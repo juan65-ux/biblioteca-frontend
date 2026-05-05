@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sistema Biblioteca — Mis Préstamos</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link rel="stylesheet" href="../css/styles.css" />
+</head>
+<body>
+
+  <!-- ── SIDEBAR ─────────────────────────────────────────── -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <div class="icon-biblioteca">
+        <img src="../img/LOGO-SENA.jpg" alt="Logo SENA" class="sidebar-logo-img" />
+      </div>
+      <h4>Biblioteca SENA</h4>
+      <p id="nombre-usuario">Cargando...</p>
+    </div>
+    <nav>
+      <a href="index.html">
+        <span class="icono">
+          <img src="../img/logo-equipos.png" alt="Solicitar Préstamo" class="sidebar-icon-img" />
+        </span>Solicitar Préstamo
+      </a>
+      <a href="prestamo.html" class="activo">
+        <span class="icono">
+          <img src="../img/logo-prestamos.png" alt="Mis Préstamos" class="sidebar-icon-img" />
+        </span>Mis Préstamos
+      </a>
+      <a href="sala.html">
+        <span class="icono">
+          <img src="../img/logo-calendario.png" alt="Reservar Sala" class="sidebar-icon-img" />
+        </span>Reservar Sala
+      </a>
+      <a href="#" onclick="cerrarSesion()">
+        <span class="icono">
+          <img src="../img/icon-cerrarsecion.png" alt="Cerrar Sesión" class="sidebar-icon-img" />
+        </span>Cerrar Sesión
+      </a>
+    </nav>
+  </aside>
+
+  <!-- ── CONTENIDO PRINCIPAL ─────────────────────────────── -->
+  <main class="contenido-principal usuario-panel">
+
+    <header class="admin-page-hero">
+      <div class="admin-page-hero-text">
+        <h1>Mis préstamos activos</h1>
+        <p>Gestiona tus préstamos de equipos y confirma los recibidos cuando corresponda</p>
+      </div>
+    </header>
+
+    <!-- Contenedor de préstamos -->
+    <div id="contenedor-prestamos">
+      <div class="loading">
+        <div class="spinner"></div>
+        <p>Cargando tus préstamos...</p>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- ── MODAL CONFIRMAR RECIBIDO ─────────────────────────── -->
+  <div class="modal fade" id="modalRecibido" tabindex="-1">
+    <div class="modal-dialog modal-sm">
+      <div class="modal-content modal-sena">
+
+        <div class="modal-header">
+          <h5 class="modal-title fw-bold">Confirmar recibido</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+
+        <div class="modal-body p-4 text-center">
+          <input type="hidden" id="recibido-registro-id" />
+          <div class="fs-1 mb-3" aria-hidden="true">📦</div>
+          <p class="text-dark fw-semibold mb-2">
+            ¿Confirmas que recibiste el equipo en buen estado?
+          </p>
+          <p class="text-muted small mb-0">
+            Se registrará la fecha y hora exacta de recibido.
+          </p>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+            Cancelar
+          </button>
+          <button type="button" class="btn btn-success" onclick="confirmarRecibido()">
+            Sí, lo recibí
+          </button>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="../js/api.js"></script>
+  <script>
+
+    // ── VERIFICAR SESIÓN ─────────────────────────────────────
+    const token = sessionStorage.getItem('token');
+    const usuarioData = sessionStorage.getItem('usuario');
+
+    if (!token || !usuarioData) {
+      window.location.href = '../login.html';
+      throw new Error('Sin sesión');
+    }
+
+    const usuario = JSON.parse(usuarioData);
+
+    // Si es admin, redirigirlo a su panel
+    if (usuario.rol === 'admin') {
+      window.location.href = '../index.html';
+      throw new Error('Redirigiendo a admin');
+    }
+
+    document.getElementById('nombre-usuario').textContent = usuario.nombreCompleto;
+
+    // ── CERRAR SESIÓN ────────────────────────────────────────
+    const cerrarSesion = () => {
+      if (confirm('¿Estás seguro que deseas cerrar sesión?')) {
+        sessionStorage.removeItem('token');
+        sessionStorage.removeItem('usuario');
+        window.location.href = '../login.html';
+      }
+    };
+
+    // ── FUNCIÓN BASE CON TOKEN ───────────────────────────────
+    // Esta función hace peticiones enviando el token automáticamente
+    const peticionConToken = async (url, metodo = 'GET', cuerpo = null) => {
+      const t = sessionStorage.getItem('token');
+      if (!t) {
+        window.location.href = '../login.html';
+        throw new Error('Sesión no disponible');
+      }
+      const opciones = {
+        method: metodo,
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${t}`,
+        },
+      };
+      if (cuerpo) opciones.body = JSON.stringify(cuerpo);
+      const respuesta = await fetch(url, opciones);
+      let datos = {};
+      try {
+        const text = await respuesta.text();
+        datos = text ? JSON.parse(text) : {};
+      } catch {
+        throw new Error('Respuesta inválida del servidor');
+      }
+      if (respuesta.status === 401) {
+        sessionStorage.removeItem('token');
+        sessionStorage.removeItem('usuario');
+        window.location.href = '../login.html';
+        throw new Error(datos.message || 'Sesión expirada. Inicia sesión de nuevo.');
+      }
+      if (!respuesta.ok) throw new Error(datos.message || 'Error en la petición');
+      return datos;
+    };
+
+    // ── CARGAR MIS PRÉSTAMOS ─────────────────────────────────
+    const cargarMisPrestamos = async () => {
+      const contenedor = document.getElementById('contenedor-prestamos');
+      contenedor.innerHTML = `
+        <div class="loading">
+          <div class="spinner"></div>
+          <p>Cargando tus préstamos...</p>
+        </div>`;
+
+      try {
+        const respuesta = await peticionConToken(
+          `${API_URL}/registros/mis-registros`
+        );
+        const prestamos = respuesta.data;
+
+        if (prestamos.length === 0) {
+          contenedor.innerHTML = `
+            <div class="estado-vacio">
+              <div class="icono-vacio">📭</div>
+              <p>No tienes préstamos activos en este momento</p>
+              <a href="index.html" class="btn btn-primary mt-3">
+                Solicitar un préstamo
+              </a>
+            </div>`;
+          return;
+        }
+
+        const prestamosDevolvibles = prestamos.filter(p => p.estado !== 'finalizado' && p.recibido);
+        const prestamosPendientesRecibido = prestamos.filter(p => !p.recibido && p.estado !== 'finalizado');
+
+        // Renderizamos todos los préstamos en un solo contenedor tipo tabla
+        contenedor.innerHTML = `
+          <div class="card-custom admin-section-card">
+            <div class="card-header-custom d-flex justify-content-between align-items-center flex-wrap gap-2">
+              <h5 class="mb-0">Préstamos de equipos</h5>
+              <div class="d-flex align-items-center gap-2">
+                ${prestamosPendientesRecibido.length > 0 ? `
+                  <button
+                    type="button"
+                    class="btn btn-warning btn-sm fw-semibold"
+                    onclick="confirmarTodoRecibido()"
+                    title="Confirmar recibido de todos los equipos pendientes"
+                  >
+                    ✅ Confirmar todo recibido
+                  </button>
+                ` : ''}
+                ${prestamosDevolvibles.length > 0 ? `
+                  <button
+                    type="button"
+                    class="btn btn-success btn-sm"
+                    onclick="devolverTodo()"
+                    title="Marcar todos como devueltos"
+                  >
+                    Devolver todo
+                  </button>
+                ` : ''}
+                <span class="admin-meta">${prestamos.length} equipo(s) en préstamo</span>
+              </div>
+            </div>
+            <div class="card-body-custom p-0">
+              <div class="table-responsive">
+                <table class="table mb-0 align-middle">
+                  <thead>
+                    <tr>
+                      <th>Equipo</th>
+                      <th>Serial</th>
+                      <th>Fecha salida</th>
+                      <th>Estado préstamo</th>
+                      <th>Recibido</th>
+                      <th style="width:260px;">Acciones</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    ${prestamos.map(p => `
+                      <tr>
+                        <td>
+                          <div class="d-flex align-items-center gap-2">
+                            <div class="usuario-prestamo-icono">
+                              ${p.equipo?.tipo === 'computador_portatil' ? '💻' : '📽️'}
+                            </div>
+                            <div>
+                              <div class="fw-semibold">${p.equipo?.nombre || '—'}</div>
+                              <div class="small text-muted">
+                                ${p.dependencia || ''}
+                              </div>
+                            </div>
+                          </div>
+                        </td>
+                        <td class="small"><code class="bg-light px-2 py-1 rounded">${p.equipo?.serial || '—'}</code></td>
+                        <td class="small">${formatearFechaHora(p.fechaSalida)}</td>
+                        <td>${badgeEstado(p.estado)}</td>
+                        <td>
+                          <span class="${p.recibido ? 'usuario-badge-recibido-si' : 'usuario-badge-recibido-no'}">
+                            ${p.recibido ? 'Recibido' : 'Pendiente recibido'}
+                          </span>
+                        </td>
+                        <td>
+                          <div class="d-flex gap-2 flex-wrap justify-content-end">
+                            ${!p.recibido ? `
+                              <button
+                                type="button"
+                                class="btn btn-success btn-sm"
+                                onclick="abrirModalRecibido('${p._id}')"
+                              >
+                                Confirmar recibido
+                              </button>
+                            ` : ''}
+                            ${p.recibido && p.estado !== 'finalizado' ? `
+                              <button
+                                type="button"
+                                class="btn btn-success btn-sm"
+                                onclick="devolverEquipo('${p._id}')"
+                                title="Marcar este equipo como devuelto"
+                              >
+                                Devolver
+                              </button>
+                            ` : ''}
+                            <button
+                              type="button"
+                              class="btn btn-outline-danger btn-sm"
+                              onclick="confirmarCancelar('${p._id}')"
+                            >
+                              Cancelar
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    `).join('')}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>`;
+
+      } catch (error) {
+        contenedor.innerHTML = `
+          <div class="estado-vacio">
+            <div class="icono-vacio">❌</div>
+            <p>Error al cargar tus préstamos</p>
+          </div>`;
+      }
+    };
+
+    // ── ABRIR MODAL RECIBIDO ─────────────────────────────────
+    const abrirModalRecibido = (id) => {
+      document.getElementById('recibido-registro-id').value = id;
+      new bootstrap.Modal(document.getElementById('modalRecibido')).show();
+    };
+
+   // ── CONFIRMAR RECIBIDO ───────────────────────────────────
+    const confirmarRecibido = async () => {
+      const id = document.getElementById('recibido-registro-id').value;
+      try {
+        await peticionConToken(
+          `${API_URL}/registros/${id}/recibido`,
+          'PATCH'
+        );
+        mostrarNotificacion('¡Recibido confirmado correctamente!', 'exito');
+        bootstrap.Modal.getInstance(document.getElementById('modalRecibido')).hide();
+        cargarMisPrestamos();
+      } catch (error) {
+        mostrarNotificacion(error.message, 'error');
+      }
+    };
+
+    // ── CANCELAR PRÉSTAMO ────────────────────────────────────
+    const confirmarCancelar = (id) => {
+      if (confirm('¿Estás seguro que deseas cancelar este préstamo?')) {
+        cancelarPrestamo(id);
+      }
+    };
+
+    const cancelarPrestamo = async (id) => {
+      try {
+        await peticionConToken(
+          `${API_URL}/registros/${id}/cancelar`,
+          'PATCH'
+        );
+        mostrarNotificacion('Préstamo cancelado correctamente', 'exito');
+        cargarMisPrestamos();
+      } catch (error) {
+        mostrarNotificacion(error.message, 'error');
+      }
+    };
+
+    // ── DEVOLVER EQUIPO(S) ────────────────────────────────────
+    const devolverEquipo = async (id) => {
+      if (!confirm('¿Confirmas la devolución de este equipo?')) return;
+      try {
+        await peticionConToken(
+          `${API_URL}/registros/${id}/devolucion`,
+          'PATCH'
+        );
+        mostrarNotificacion('Equipo devuelto. Ya está disponible para otros usuarios.', 'exito');
+        cargarMisPrestamos();
+      } catch (error) {
+        mostrarNotificacion(error.message, 'error');
+      }
+    };
+
+    // ── CONFIRMAR RECIBIDO DE TODOS ──────────────────────────
+    const confirmarTodoRecibido = async () => {
+      try {
+        const respuesta = await peticionConToken(`${API_URL}/registros/mis-registros`);
+        const prestamos = respuesta.data || [];
+        const ids = prestamos
+          .filter(p => !p.recibido && p.estado !== 'finalizado')
+          .map(p => p._id);
+
+        if (ids.length === 0) {
+          mostrarNotificacion('No hay equipos pendientes de confirmar recibido.', 'advertencia');
+          return;
+        }
+
+        if (!confirm(`¿Confirmas que recibiste todos los equipos pendientes (${ids.length}) en buen estado?`)) return;
+
+        await Promise.all(
+          ids.map(id => peticionConToken(`${API_URL}/registros/${id}/recibido`, 'PATCH'))
+        );
+
+        mostrarNotificacion(`${ids.length} equipo(s) confirmados como recibidos correctamente.`, 'exito');
+        cargarMisPrestamos();
+      } catch (error) {
+        mostrarNotificacion(error.message, 'error');
+      }
+    };
+
+    const devolverTodo = async () => {
+      try {
+        const respuesta = await peticionConToken(`${API_URL}/registros/mis-registros`);
+        const prestamos = respuesta.data || [];
+        const ids = prestamos
+          .filter(p => p.estado !== 'finalizado' && p.recibido)
+          .map(p => p._id);
+
+        if (ids.length === 0) {
+          mostrarNotificacion('No hay equipos para devolver en este momento.', 'advertencia');
+          return;
+        }
+
+        if (!confirm(`¿Confirmas la devolución de todos tus equipos recibidos (${ids.length})?`)) return;
+
+        await Promise.all(
+          ids.map(id => peticionConToken(`${API_URL}/registros/${id}/devolucion`, 'PATCH'))
+        );
+
+        mostrarNotificacion(`${ids.length} equipo(s) devuelto(s). Ya están disponibles.`, 'exito');
+        cargarMisPrestamos();
+      } catch (error) {
+        mostrarNotificacion(error.message, 'error');
+      }
+    };
+
+    cargarMisPrestamos();
+
+    // ── AUTO-REFRESH CADA 15 SEGUNDOS ────────────────────────
+    setInterval(cargarMisPrestamos, 15000);
+
+  </script>
+
+</body>
+</html>

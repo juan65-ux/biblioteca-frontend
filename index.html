@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sistema Biblioteca — Dashboard</title>
+
+  <!-- Bootstrap CSS desde CDN (no necesitas instalarlo) -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+
+  <!-- Tus estilos personalizados -->
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+
+<body>
+
+  <!-- ── SIDEBAR ─────────────────────────────────────────── -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <div class="icon-biblioteca">
+        <img src="img/LOGO-SENA.jpg" alt="Logo SENA" class="sidebar-logo-img" />
+      </div>
+      <h4>Biblioteca SENA</h4>
+      <p>Sistema de Gestión</p>
+    </div>
+
+    <nav>
+      <a href="index.html" class="activo">
+        <span class="icono">
+          <img src="img/logo-dashboard.png" alt="Dashboard" class="sidebar-icon-img" />
+        </span>
+        Dashboard
+      </a>
+      <a href="equipos.html">
+        <span class="icono">
+          <img src="img/logo-equipos.png" alt="Equipos" class="sidebar-icon-img" />
+        </span>
+        Equipos
+      </a>
+      <a href="prestamos.html">
+        <span class="icono">
+          <img src="img/logo-prestamos.png" alt="Préstamos" class="sidebar-icon-img" />
+        </span>
+        Préstamos
+      </a>
+      <a href="prestamos-aprendices.html">
+        <span class="icono">
+          <img src="img/logo-prestamos.png" alt="Préstamos Aprendices" class="sidebar-icon-img" />
+        </span>
+        Préstamos Aprendices
+      </a>
+      <a href="reservas.html">
+        <span class="icono">
+          <img src="img/logo-calendario.png" alt="Reservas de Sala" class="sidebar-icon-img" />
+        </span>
+        Reservas de Sala
+      </a>
+      <a href="usuarios.html">
+        <span class="icono">
+          <img src="img/logo-dashboard.png" alt="Usuarios" class="sidebar-icon-img" />
+        </span>
+        Usuarios
+      </a>
+      <a href="#" onclick="cerrarSesionAdmin()">
+        <span class="icono">
+          <img src="img/icon-cerrarsecion.png" alt="Cerrar Sesión" class="sidebar-icon-img" />
+        </span>
+        Cerrar Sesión
+      </a>
+    </nav>
+  </aside>
+
+  <!-- ── CONTENIDO PRINCIPAL ─────────────────────────────── -->
+  <main class="contenido-principal dashboard-admin admin-page">
+
+    <header class="admin-page-hero">
+      <div class="admin-page-hero-text">
+        <h1>Panel de control</h1>
+        <p>Resumen general del sistema de gestión de la biblioteca</p>
+        <p class="admin-page-hero-fecha" id="dashboard-fecha" aria-live="polite"></p>
+      </div>
+    </header>
+
+    <!-- Tarjetas KPI -->
+    <div class="row g-4 mb-4">
+
+      <div class="col-md-3">
+        <a href="equipos.html" class="dashboard-kpi-link">
+          <div class="dashboard-kpi">
+            <div class="dashboard-kpi-inner">
+              <div class="dashboard-kpi-icon bg-azul-suave">
+                <img src="img/logo-equipos.png" alt="" class="dashboard-kpi-img" width="28" height="28" />
+              </div>
+              <div class="dashboard-kpi-body">
+                <span class="dashboard-kpi-label">Total de equipos</span>
+                <div class="stat-numero" id="total-equipos">—</div>
+              </div>
+            </div>
+          </div>
+        </a>
+      </div>
+
+      <div class="col-md-3">
+        <a href="equipos.html" class="dashboard-kpi-link">
+          <div class="dashboard-kpi">
+            <div class="dashboard-kpi-inner">
+              <div class="dashboard-kpi-icon bg-verde-suave">
+                <img src="img/logo-equipos.png" alt="" class="dashboard-kpi-img" width="28" height="28" />
+              </div>
+              <div class="dashboard-kpi-body">
+                <span class="dashboard-kpi-label">Equipos disponibles</span>
+                <div class="stat-numero" id="equipos-disponibles">—</div>
+              </div>
+            </div>
+          </div>
+        </a>
+      </div>
+
+      <div class="col-md-3">
+        <a href="prestamos.html" class="dashboard-kpi-link">
+          <div class="dashboard-kpi">
+            <div class="dashboard-kpi-inner">
+              <div class="dashboard-kpi-icon bg-rojo-suave">
+                <img src="img/logo-prestamos.png" alt="" class="dashboard-kpi-img" width="28" height="28" />
+              </div>
+              <div class="dashboard-kpi-body">
+                <span class="dashboard-kpi-label">Préstamos activos</span>
+                <div class="stat-numero" id="prestamos-activos">—</div>
+              </div>
+            </div>
+          </div>
+        </a>
+      </div>
+
+      <div class="col-md-3">
+        <a href="reservas.html" class="dashboard-kpi-link">
+          <div class="dashboard-kpi">
+            <div class="dashboard-kpi-inner">
+              <div class="dashboard-kpi-icon bg-amarillo-suave">
+                <img src="img/logo-calendario.png" alt="" class="dashboard-kpi-img" width="28" height="28" />
+              </div>
+              <div class="dashboard-kpi-body">
+                <span class="dashboard-kpi-label">Reservas hoy</span>
+                <div class="stat-numero" id="reservas-hoy">—</div>
+              </div>
+            </div>
+          </div>
+        </a>
+      </div>
+
+    </div>
+
+    <!-- Tablas de resumen -->
+    <div class="row g-4">
+
+      <!-- Préstamos activos -->
+      <div class="col-md-6">
+        <div class="card-custom admin-section-card">
+          <div class="card-header-custom">
+            <h5>Préstamos activos</h5>
+            <a href="prestamos.html" class="admin-link-action">Ver todos →</a>
+          </div>
+          <div class="card-body-custom p-0">
+            <div id="tabla-prestamos-activos">
+              <div class="loading">
+                <div class="spinner"></div>
+                <p>Cargando...</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Reservas de hoy -->
+      <div class="col-md-6">
+        <div class="card-custom admin-section-card">
+          <div class="card-header-custom">
+            <h5>Reservas de hoy</h5>
+            <a href="reservas.html" class="admin-link-action">Ver todas →</a>
+          </div>
+          <div class="card-body-custom p-0">
+            <div id="tabla-reservas-hoy">
+              <div class="loading">
+                <div class="spinner"></div>
+                <p>Cargando...</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+
+    </div>
+  </main>
+
+  <!-- Bootstrap JS -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+  <!-- Nuestros scripts -->
+  <script src="js/api.js"></script>
+  <script>
+    // ── VERIFICAR SESIÓN ADMIN ───────────────────────────────
+    const token = sessionStorage.getItem('token');
+    const usuarioData = sessionStorage.getItem('usuario');
+
+    if (!token || !usuarioData) {
+      window.location.href = 'login.html';
+      throw new Error('Sin sesión');
+    }
+
+    const usuarioActual = JSON.parse(usuarioData);
+    if (usuarioActual.rol !== 'admin') {
+      window.location.href = 'usuario/index.html';
+      throw new Error('No es admin');
+    }
+
+    const cerrarSesionAdmin = () => {
+      if (confirm('¿Estás seguro que deseas cerrar sesión?')) {
+        sessionStorage.removeItem('token');
+        sessionStorage.removeItem('usuario');
+        window.location.href = 'login.html';
+      }
+    };
+
+    document.getElementById('dashboard-fecha').textContent = new Date().toLocaleDateString('es-CO', {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+    });
+
+    // ── CARGAR DATOS DEL DASHBOARD ───────────────────────────
+    const cargarDashboard = async () => {
+      try {
+        // Hacemos todas las peticiones al mismo tiempo para que cargue rápido
+        const [equipos, equiposDisponibles] = await Promise.all([
+          equiposAPI.listar(),
+          equiposAPI.listar({ estado: 'disponible' }),
+        ]);
+
+        // Registros activos (sistema unificado con token)
+        const respRegistros = await fetch(`${API_URL}/registros/buscar?estado=activo`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const prestamosActivos = await respRegistros.json();
+
+        // Fecha de hoy para filtrar reservas
+        const hoy = new Date().toISOString().split('T')[0];
+        const reservasHoy = await reservasAPI.listar({ fecha: hoy });
+
+        // ── Actualizar números en las tarjetas ───────────────
+        document.getElementById('total-equipos').textContent =
+          equipos.total;
+        document.getElementById('equipos-disponibles').textContent =
+          equiposDisponibles.total;
+        document.getElementById('prestamos-activos').textContent =
+          prestamosActivos.total || 0;
+        document.getElementById('reservas-hoy').textContent =
+          reservasHoy.total;
+
+        // ── Renderizar tabla de préstamos activos ────────────
+        const contPrestamos = document.getElementById('tabla-prestamos-activos');
+        const listaPrestamos = prestamosActivos.data || [];
+        if (listaPrestamos.length === 0) {
+          contPrestamos.innerHTML = `
+            <div class="estado-vacio">
+              <div class="icono-vacio">📭</div>
+              <p>No hay préstamos activos en este momento</p>
+            </div>`;
+        } else {
+          contPrestamos.innerHTML = `
+            <table class="tabla-custom">
+              <thead>
+                <tr>
+                  <th>Solicitante</th>
+                  <th>Equipo</th>
+                  <th>Fecha Salida</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${listaPrestamos.map(p => `
+                  <tr>
+                    <td>${p.nombreCompleto}</td>
+                    <td>${p.equipo?.nombre || '—'}</td>
+                    <td>${formatearFecha(p.fechaSalida)}</td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>`;
+        }
+
+        // ── Renderizar tabla de reservas de hoy ──────────────
+        const contReservas = document.getElementById('tabla-reservas-hoy');
+        const reservasActivas = reservasHoy.data.filter(r => r.estado === 'activa');
+        if (reservasActivas.length === 0) {
+          contReservas.innerHTML = `
+            <div class="estado-vacio">
+              <div class="icono-vacio">📭</div>
+              <p>No hay reservas para hoy</p>
+            </div>`;
+        } else {
+          contReservas.innerHTML = `
+            <table class="tabla-custom">
+              <thead>
+                <tr>
+                  <th>Solicitante</th>
+                  <th>Horario</th>
+                  <th>Motivo</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${reservasActivas.map(r => `
+                  <tr>
+                    <td>${r.nombreSolicitante}</td>
+                    <td>${r.horaInicio} — ${r.horaFin}</td>
+                    <td>${r.motivo}</td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>`;
+        }
+
+
+
+      } catch (error) {
+        mostrarNotificacion(
+          'Error al cargar el dashboard. ¿Está el servidor corriendo?',
+          'error'
+        );
+      }
+    };
+
+    // Ejecutar al cargar la página
+    cargarDashboard();
+
+    // ── AUTO-REFRESH CADA 15 SEGUNDOS ────────────────────────
+    setInterval(cargarDashboard, 15000);
+  </script>
+
+</body>
+
+</html>

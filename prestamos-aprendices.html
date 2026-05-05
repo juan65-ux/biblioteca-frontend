@@ -1,0 +1,592 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sistema Biblioteca — Préstamos Aprendices en Sala</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+
+  <!-- ── SIDEBAR ─────────────────────────────────────────── -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <div class="icon-biblioteca">
+        <img src="img/LOGO-SENA.jpg" alt="Logo SENA" class="sidebar-logo-img" />
+      </div>
+      <h4>Biblioteca SENA</h4>
+      <p>Sistema de Gestión</p>
+    </div>
+    <nav>
+      <a href="index.html">
+        <span class="icono">
+          <img src="img/logo-dashboard.png" alt="Dashboard" class="sidebar-icon-img" />
+        </span>Dashboard</a>
+      <a href="equipos.html">
+        <span class="icono">
+          <img src="img/logo-equipos.png" alt="Equipos" class="sidebar-icon-img" />
+        </span>Equipos</a>
+      <a href="prestamos.html">
+        <span class="icono">
+          <img src="img/logo-prestamos.png" alt="Préstamos" class="sidebar-icon-img" />
+        </span>Préstamos</a>
+      <a href="prestamos-aprendices.html" class="activo">
+        <span class="icono">
+          <img src="img/logo-prestamos.png" alt="Préstamos Aprendices" class="sidebar-icon-img" />
+        </span>Préstamos Aprendices</a>
+      <a href="reservas.html">
+        <span class="icono">
+          <img src="img/logo-calendario.png" alt="Reservas de Sala" class="sidebar-icon-img" />
+        </span>Reservas de Sala</a>
+      <a href="usuarios.html">
+        <span class="icono">
+          <img src="img/logo-dashboard.png" alt="Usuarios" class="sidebar-icon-img" />
+        </span>Usuarios</a>
+      <a href="#" onclick="cerrarSesionAdmin()">
+        <span class="icono">
+          <img src="img/icon-cerrarsecion.png" alt="Cerrar Sesión" class="sidebar-icon-img" />
+        </span>Cerrar Sesión</a>
+    </nav>
+  </aside>
+
+  <!-- ── CONTENIDO PRINCIPAL ─────────────────────────────── -->
+  <main class="contenido-principal admin-page">
+
+    <header class="admin-page-hero">
+      <div class="admin-page-hero-text">
+        <h1>Préstamos de Sala para Aprendices</h1>
+        <p>Registra computadores prestados a aprendices para el uso dentro de la sala</p>
+      </div>
+      <div class="admin-page-hero-actions">
+        <button type="button" class="btn btn-primary" onclick="abrirModalPrestamo()">+ Nuevo préstamo (Sala)</button>
+      </div>
+    </header>
+
+    <!-- Pestañas -->
+    <div class="mb-4">
+      <ul class="nav nav-tabs admin-tabs border-0">
+        <li class="nav-item">
+          <button type="button" class="nav-link active" id="tab-activos" onclick="cambiarTab('activos')">
+            En curso
+            <span id="badge-activos" class="badge bg-danger ms-2" style="font-size:0.7rem; display:none;"></span>
+          </button>
+        </li>
+        <li class="nav-item">
+          <button type="button" class="nav-link" id="tab-historial" onclick="cambiarTab('historial')">
+            Historial de sala
+          </button>
+        </li>
+      </ul>
+    </div>
+
+    <!-- Contenedores de Tablas -->
+    <div id="contenido-activos">
+      <div class="card-custom admin-section-card">
+        <div class="card-header-custom">
+          <h5>Equipos en uso en la sala</h5>
+        </div>
+        <div id="tabla-activos">
+          <div class="loading"><div class="spinner"></div><p>Cargando...</p></div>
+        </div>
+      </div>
+    </div>
+
+    <div id="contenido-historial" style="display:none;">
+      <div class="card-custom admin-section-card">
+        <div class="card-header-custom">
+          <h5>Historial de préstamos en sala</h5>
+          <button type="button" class="btn btn-success btn-sm" onclick="descargarHistorialSalaExcel()" title="Descargar historial de sala en Excel">
+            📥 Descargar Excel
+          </button>
+        </div>
+        <div id="tabla-historial">
+          <div class="loading"><div class="spinner"></div><p>Cargando...</p></div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- ── MODAL DETALLE APRENDIZ ───────────────────────────── -->
+  <div class="modal fade" id="modalDetalleAprendiz" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+      <div class="modal-content modal-sena">
+        <div class="modal-header" style="background: linear-gradient(135deg, #1a472a 0%, #2d6a4f 100%); color:#fff; border-bottom:none;">
+          <div class="d-flex align-items-center gap-3">
+            <div style="width:44px; height:44px; border-radius:50%; background:rgba(255,255,255,0.2); display:flex; align-items:center; justify-content:center; font-size:1.4rem;">👤</div>
+            <div>
+              <h5 class="modal-title fw-bold mb-0" id="modal-aprendiz-nombre">—</h5>
+              <small style="opacity:.8;" id="modal-aprendiz-doc">—</small>
+            </div>
+          </div>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body p-4" id="modal-aprendiz-body"></div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cerrar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── MODAL NUEVO PRÉSTAMO APRENDIZ ─────────────────────────────── -->
+  <div class="modal fade" id="modalPrestamo" tabindex="-1">
+    <div class="modal-dialog modal-xl">
+      <div class="modal-content modal-sena">
+        <div class="modal-header">
+          <h5 class="modal-title fw-bold">Registrar Préstamo en Sala (Aprendices)</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body p-4">
+          <div class="row g-4">
+            
+            <!-- Datos del aprendiz -->
+            <div class="col-md-5">
+              <h6 class="fw-bold mb-3 text-secondary">Datos del aprendiz</h6>
+              
+              <div class="mb-3">
+                <label class="form-label fw-semibold">Nombre completo <span class="text-danger">*</span></label>
+                <input type="text" class="form-control" id="prestamo-nombre" placeholder="Nombre del aprendiz" />
+              </div>
+              
+              <div class="row mb-3">
+                <div class="col-5">
+                  <label class="form-label fw-semibold">Tipo Documento <span class="text-danger">*</span></label>
+                  <select class="form-select" id="prestamo-tipo-doc">
+                    <option value="CC">CC</option>
+                    <option value="TI">TI</option>
+                    <option value="CE">CE</option>
+                    <option value="PEP">PEP</option>
+                  </select>
+                </div>
+                <div class="col-7">
+                  <label class="form-label fw-semibold">N° Documento <span class="text-danger">*</span></label>
+                  <input type="text" class="form-control" id="prestamo-documento" placeholder="Número" />
+                </div>
+              </div>
+
+              <div class="mb-3">
+                <label class="form-label fw-semibold">Número de Ficha <span class="text-danger">*</span></label>
+                <input type="text" class="form-control" id="prestamo-ficha" placeholder="Ficha / Programa" />
+              </div>
+
+              <div class="row mb-3">
+                <div class="col-6">
+                  <label class="form-label fw-semibold">Fecha <span class="text-danger">*</span></label>
+                  <input type="date" class="form-control" id="prestamo-fecha" />
+                </div>
+                <div class="col-6">
+                  <label class="form-label fw-semibold">Hora de préstamo <span class="text-danger">*</span></label>
+                  <input type="time" class="form-control" id="prestamo-hora" />
+                </div>
+              </div>
+            </div>
+
+            <!-- Selección de equipos -->
+            <div class="col-md-7">
+              <div class="d-flex justify-content-between align-items-center mb-3">
+                <h6 class="fw-bold mb-0 text-secondary">Selección de portátiles</h6>
+                <span id="modal-contador" class="modal-contador-equipos">0 seleccionados</span>
+              </div>
+              <p class="text-muted small mb-3">Selecciona los computadores que el aprendiz usará dentro de la sala.</p>
+              
+              <div id="grilla-modal" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(195px,1fr)); gap:10px; max-height:350px; overflow-y:auto; padding-right:4px;">
+                <div class="loading"><div class="spinner"></div><p>Cargando computadores disponibles...</p></div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="button" class="btn btn-primary" onclick="guardarPrestamo()">Registrar Préstamo</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+  <script src="js/api.js"></script>
+  <script>
+    // ── SESIÓN ADMIN ─────────────────────────────────────────
+    const token = sessionStorage.getItem('token');
+    const usuarioData = sessionStorage.getItem('usuario');
+    if (!token || !usuarioData) { window.location.href = 'login.html'; throw new Error('Sin sesión'); }
+    const usuarioActual = JSON.parse(usuarioData);
+    if (usuarioActual.rol !== 'admin') { window.location.href = 'usuario/index.html'; throw new Error('No es admin'); }
+
+    const cerrarSesionAdmin = () => {
+      if (confirm('¿Estás seguro que deseas cerrar sesión?')) {
+        sessionStorage.removeItem('token'); sessionStorage.removeItem('usuario');
+        window.location.href = 'login.html';
+      }
+    };
+
+    // ── ESTADO DE TAB ────────────────────────────────────────
+    const cambiarTab = (tab) => {
+      document.getElementById('tab-activos').classList.toggle('active', tab === 'activos');
+      document.getElementById('tab-historial').classList.toggle('active', tab === 'historial');
+      document.getElementById('contenido-activos').style.display = tab === 'activos' ? 'block' : 'none';
+      document.getElementById('contenido-historial').style.display = tab === 'historial' ? 'block' : 'none';
+      tab === 'activos' ? cargarActivos() : cargarHistorial();
+    };
+
+    // ── CARGAR DATOS ─────────────────────────────────────────
+    const cargarActivos = async () => {
+      const cont = document.getElementById('tabla-activos');
+      cont.innerHTML = `<div class="loading"><div class="spinner"></div><p>Cargando...</p></div>`;
+      try {
+        const resp = await prestamosAprendicesAPI.listar({ estado: 'activo' });
+        const prestamos = resp.data;
+
+        const badge = document.getElementById('badge-activos');
+        if (prestamos.length > 0) { badge.textContent = prestamos.length; badge.style.display = 'inline'; }
+        else badge.style.display = 'none';
+
+        if (prestamos.length === 0) {
+          cont.innerHTML = `<div class="estado-vacio"><div class="icono-vacio">📭</div><p>No hay préstamos activos en sala</p></div>`;
+          return;
+        }
+
+        cont.innerHTML = generarHTMLTabla(prestamos, true);
+      } catch (e) {
+        cont.innerHTML = `<div class="estado-vacio"><div class="icono-vacio">❌</div><p>Error al cargar</p></div>`;
+      }
+    };
+
+    const cargarHistorial = async () => {
+      const cont = document.getElementById('tabla-historial');
+      cont.innerHTML = `<div class="loading"><div class="spinner"></div><p>Cargando...</p></div>`;
+      try {
+        const resp = await prestamosAprendicesAPI.listar();
+        if (resp.data.length === 0) {
+          cont.innerHTML = `<div class="estado-vacio"><div class="icono-vacio">📭</div><p>No hay historial de préstamos</p></div>`;
+          return;
+        }
+        cont.innerHTML = generarHTMLTabla(resp.data, false);
+      } catch (e) {
+        cont.innerHTML = `<div class="estado-vacio"><div class="icono-vacio">❌</div><p>Error al cargar</p></div>`;
+      }
+    };
+
+    const formatearFechaSimple = (fechaIso) => {
+      return new Date(fechaIso).toLocaleDateString('es-CO');
+    };
+
+    const generarHTMLTabla = (prestamos, activos) => {
+      let html = `
+        <table class="tabla-custom">
+          <thead>
+            <tr>
+              <th>Aprendiz</th>
+              <th>Documento</th>
+              <th>Ficha</th>
+              <th>Equipos (Seriales)</th>
+              <th>Salida / Fecha</th>
+              <th>${activos ? 'Acciones' : 'Devolución'}</th>
+            </tr>
+          </thead>
+          <tbody>
+      `;
+      prestamos.forEach(p => {
+        const portatiles = p.equipos.map(e => `<code>${e.serial}</code>`).join(', ');
+        const datosJson = encodeURIComponent(JSON.stringify(p));
+        
+        html += `
+          <tr>
+            <td>
+              <strong
+                class="aprendiz-link"
+                onclick="verDetalleAprendiz(decodeURIComponent('${datosJson}'))"
+                title="Ver detalle del aprendiz"
+              >${p.nombreCompleto}</strong>
+            </td>
+            <td>${p.tipoDocumento} ${p.numeroDocumento}</td>
+            <td>Ficha: ${p.numeroFicha}</td>
+            <td>
+              <span class="badge bg-secondary mb-1">${p.equipos.length} portátil(es)</span><br>
+              ${portatiles}
+            </td>
+            <td>
+               <span class="text-primary fw-bold">${p.horaPrestamo}</span><br>
+               <small class="text-muted">${formatearFechaSimple(p.fecha)}</small>
+            </td>
+            <td>
+              ${p.estado === 'activo'
+                ? `<button class="btn btn-success btn-sm w-100 fw-bold" onclick="finalizarPrestamo('${p._id}')">✓ Finalizar uso</button>`
+                : `<span class="badge bg-success text-white">Devuelto a las ${p.horaDevolucion}</span>`
+              }
+            </td>
+          </tr>
+        `;
+      });
+      html += `</tbody></table>`;
+      return html;
+    };
+
+    // ── VER DETALLE DEL APRENDIZ ─────────────────────────────
+    const verDetalleAprendiz = (jsonStr) => {
+      const p = JSON.parse(jsonStr);
+
+      document.getElementById('modal-aprendiz-nombre').textContent = p.nombreCompleto || '—';
+      document.getElementById('modal-aprendiz-doc').textContent =
+        `${p.tipoDocumento || ''} ${p.numeroDocumento || ''}`;
+
+      const equiposHTML = (p.equipos && p.equipos.length > 0)
+        ? p.equipos.map((e, i) => `
+            <div style="display:flex; align-items:center; gap:12px; padding:10px 14px; border-radius:10px; background:#f0fdf4; border:1px solid #bbf7d0; margin-bottom:8px;">
+              <span style="font-size:1.3rem;">💻</span>
+              <div style="flex:1;">
+                <div style="font-weight:700; color:#166534;">${e.nombre || 'Portátil ' + (i+1)}</div>
+                <div style="font-size:.8rem; color:#6b7280;">Serial: <code style="background:#dcfce7; padding:1px 6px; border-radius:4px; color:#14532d;">${e.serial || '—'}</code></div>
+              </div>
+              <span style="font-size:.75rem; font-weight:700; padding:3px 10px; border-radius:20px; background:#16a34a; color:#fff;">En uso</span>
+            </div>`).join('')
+        : '<p class="text-muted">Sin equipos registrados</p>';
+
+      const estadoBadge = p.estado === 'activo'
+        ? '<span style="padding:4px 14px; border-radius:20px; background:#16a34a; color:#fff; font-weight:700; font-size:.85rem;">🟢 Activo</span>'
+        : '<span style="padding:4px 14px; border-radius:20px; background:#6b7280; color:#fff; font-weight:700; font-size:.85rem;">✅ Finalizado</span>';
+
+      const devolucionRow = p.horaDevolucion
+        ? `<div style="display:flex; justify-content:space-between; padding:10px 0; border-bottom:1px solid #e5e7eb;">
+             <span style="color:#6b7280; font-size:.9rem;">🕓 Hora devolución</span>
+             <span style="font-weight:600; color:#16a34a;">${p.horaDevolucion}</span>
+           </div>` : '';
+
+      document.getElementById('modal-aprendiz-body').innerHTML = `
+        <div style="display:flex; flex-direction:column; gap:20px;">
+
+          <!-- Info general -->
+          <div style="background:#f8fafc; border-radius:12px; padding:16px 20px; border:1px solid #e2e8f0;">
+            <h6 style="color:#374151; font-weight:700; margin-bottom:14px; font-size:.95rem;">📋 Información general</h6>
+            <div style="display:flex; justify-content:space-between; padding:10px 0; border-bottom:1px solid #e5e7eb;">
+              <span style="color:#6b7280; font-size:.9rem;">👤 Nombre</span>
+              <span style="font-weight:600;">${p.nombreCompleto || '—'}</span>
+            </div>
+            <div style="display:flex; justify-content:space-between; padding:10px 0; border-bottom:1px solid #e5e7eb;">
+              <span style="color:#6b7280; font-size:.9rem;">🪪 Documento</span>
+              <span style="font-weight:600;">${p.tipoDocumento || ''} ${p.numeroDocumento || '—'}</span>
+            </div>
+            <div style="display:flex; justify-content:space-between; padding:10px 0; border-bottom:1px solid #e5e7eb;">
+              <span style="color:#6b7280; font-size:.9rem;">📂 Ficha</span>
+              <span style="font-weight:600;">${p.numeroFicha || '—'}</span>
+            </div>
+            <div style="display:flex; justify-content:space-between; padding:10px 0; border-bottom:1px solid #e5e7eb;">
+              <span style="color:#6b7280; font-size:.9rem;">📅 Fecha</span>
+              <span style="font-weight:600;">${p.fecha ? formatearFechaSimple(p.fecha) : '—'}</span>
+            </div>
+            <div style="display:flex; justify-content:space-between; padding:10px 0; border-bottom:1px solid #e5e7eb;">
+              <span style="color:#6b7280; font-size:.9rem;">🕐 Hora préstamo</span>
+              <span style="font-weight:600; color:#1e40af;">${p.horaPrestamo || '—'}</span>
+            </div>
+            ${devolucionRow}
+            <div style="display:flex; justify-content:space-between; padding:10px 0;">
+              <span style="color:#6b7280; font-size:.9rem;">Estado</span>
+              ${estadoBadge}
+            </div>
+          </div>
+
+          <!-- Equipos -->
+          <div>
+            <h6 style="color:#374151; font-weight:700; margin-bottom:12px; font-size:.95rem;">
+              💻 Portátiles prestados (${p.equipos ? p.equipos.length : 0})
+            </h6>
+            ${equiposHTML}
+          </div>
+
+        </div>`;
+
+      new bootstrap.Modal(document.getElementById('modalDetalleAprendiz')).show();
+    };
+
+    // ── MARCAR DEVUELTO ──────────────────────────────────────
+    const finalizarPrestamo = async (id) => {
+      if (!confirm('¿Confirmas que el aprendiz devolvió todos los portátiles prestados?')) return;
+      try {
+        await prestamosAprendicesAPI.finalizar(id);
+        mostrarNotificacion('Préstamo finalizado y portátiles disponibles', 'exito');
+        cargarActivos();
+      } catch (e) {
+        mostrarNotificacion(e.message, 'error');
+      }
+    };
+
+    // ── MODAL NUEVO PRÉSTAMO ─────────────────────────────────
+    let equiposSeleccionados = [];
+    let equiposDisponibles = [];
+
+    const abrirModalPrestamo = async () => {
+      equiposSeleccionados = [];
+      document.getElementById('prestamo-nombre').value = '';
+      document.getElementById('prestamo-tipo-doc').value = 'CC';
+      document.getElementById('prestamo-documento').value = '';
+      document.getElementById('prestamo-ficha').value = '';
+      
+      const ahora = new Date();
+      ahora.setMinutes(ahora.getMinutes() - ahora.getTimezoneOffset());
+      document.getElementById('prestamo-fecha').value = ahora.toISOString().slice(0, 10);
+      document.getElementById('prestamo-hora').value = ahora.toISOString().slice(11, 16);
+
+      await cargarEquiposModal();
+      new bootstrap.Modal(document.getElementById('modalPrestamo')).show();
+    };
+
+    const cargarEquiposModal = async () => {
+      const grilla = document.getElementById('grilla-modal');
+      grilla.innerHTML = `<div class="loading"><div class="spinner"></div><p>Cargando...</p></div>`;
+      try {
+        // Solo traemos computadores portátiles para la sala
+        const resp = await equiposAPI.listar({ tipo: 'computador_portatil' });
+        equiposDisponibles = resp.data;
+        renderGrillaEquipos();
+      } catch (e) {
+        grilla.innerHTML = `<p style="color:#991b1b; padding:16px;">Error al cargar equipos</p>`;
+      }
+    };
+
+    const renderGrillaEquipos = () => {
+      const grilla = document.getElementById('grilla-modal');
+      if (equiposDisponibles.length === 0) {
+        grilla.innerHTML = `<div class="estado-vacio"><div class="icono-vacio">📭</div><p>No hay portátiles registrados</p></div>`;
+        return;
+      }
+      grilla.innerHTML = equiposDisponibles.map(e => {
+        const libre = e.estado === 'disponible';
+        const sel   = equiposSeleccionados.includes(e._id);
+        return `
+          <div
+            class="equipo-chip ${libre ? 'disponible' : 'ocupado'} ${sel ? 'seleccionado' : ''}"
+            onclick="${libre ? `toggleEquipo('${e._id}')` : ''}"
+            title="${libre ? 'Clic para seleccionar' : 'Equipo ocupado'}"
+            style="display:flex; align-items:center; gap:10px; padding:10px 14px; border-radius:10px; border:2px solid transparent; cursor:${libre?'pointer':'not-allowed'}; transition:all .15s; font-size:.875rem; font-weight:600;
+              background:${sel ? '#16a34a' : libre ? '#f0fdf4' : '#fef2f2'};
+              border-color:${sel ? '#15803d' : libre ? '#86efac' : '#fca5a5'};
+              color:${sel ? '#fff' : libre ? '#166534' : '#991b1b'}; opacity:${libre?1:.75};"
+          >
+            <span style="font-size:1.1rem;">💻</span>
+            <div style="flex:1; min-width:0;">
+              <div style="font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${e.nombre}</div>
+              <div style="font-size:.75rem; opacity:.75; font-weight:400;">${e.serial}</div>
+            </div>
+            <span style="font-size:.7rem; font-weight:700; padding:2px 8px; border-radius:20px;
+              background:${sel ? 'rgba(255,255,255,.25)' : libre ? '#bbf7d0' : '#fecaca'};
+              color:${sel ? '#fff' : libre ? '#14532d' : '#7f1d1d'};">
+              ${libre ? (sel ? '✓' : 'Libre') : 'Ocupado'}
+            </span>
+          </div>`;
+      }).join('');
+      
+      document.getElementById('modal-contador').textContent =
+        equiposSeleccionados.length === 0
+          ? '0 seleccionados'
+          : `${equiposSeleccionados.length} seleccionado${equiposSeleccionados.length>1?'s':''}`;
+    };
+
+    const toggleEquipo = (id) => {
+      const idx = equiposSeleccionados.indexOf(id);
+      if (idx === -1) equiposSeleccionados.push(id);
+      else equiposSeleccionados.splice(idx, 1);
+      renderGrillaEquipos();
+    };
+
+    const guardarPrestamo = async () => {
+      const datos = {
+        nombreCompleto: document.getElementById('prestamo-nombre').value.trim(),
+        tipoDocumento: document.getElementById('prestamo-tipo-doc').value,
+        numeroDocumento: document.getElementById('prestamo-documento').value.trim(),
+        numeroFicha: document.getElementById('prestamo-ficha').value.trim(),
+        fecha: document.getElementById('prestamo-fecha').value,
+        horaPrestamo: document.getElementById('prestamo-hora').value,
+        equiposIds: equiposSeleccionados
+      };
+
+      if (!datos.nombreCompleto || !datos.numeroDocumento || !datos.numeroFicha || !datos.fecha || !datos.horaPrestamo) {
+        mostrarNotificacion('Por favor completa todos los campos del aprendiz y horario', 'advertencia'); return;
+      }
+      if (datos.equiposIds.length === 0) {
+        mostrarNotificacion('Selecciona al menos un portátil para prestar', 'advertencia'); return;
+      }
+
+      try {
+        await prestamosAprendicesAPI.crear(datos);
+        mostrarNotificacion('Préstamo registrado exitosamente. Los portátiles ahora figuran como prestados.', 'exito');
+        bootstrap.Modal.getInstance(document.getElementById('modalPrestamo')).hide();
+        cargarActivos();
+      } catch (e) {
+        mostrarNotificacion(e.message, 'error');
+      }
+    };
+
+    // Iniciar
+    cargarActivos();
+
+    // ── DESCARGAR HISTORIAL DE SALA EN EXCEL ───────────────
+    const descargarHistorialSalaExcel = async () => {
+      try {
+        mostrarNotificacion('Generando archivo Excel...', 'exito');
+        const resp = await prestamosAprendicesAPI.listar();
+        const prestamos = resp.data;
+
+        if (prestamos.length === 0) {
+          mostrarNotificacion('No hay datos para descargar', 'advertencia');
+          return;
+        }
+
+        const filas = prestamos.map(p => ({
+          'Aprendiz': p.nombreCompleto,
+          'Tipo Documento': p.tipoDocumento,
+          'N° Documento': p.numeroDocumento,
+          'N° Ficha': p.numeroFicha,
+          'Cantidad Equipos': p.equipos.length,
+          'Seriales': p.equipos.map(e => e.serial).join(', '),
+          'Equipos (Nombres)': p.equipos.map(e => e.nombre).join(', '),
+          'Fecha': p.fecha ? new Date(p.fecha).toLocaleDateString('es-CO') : '—',
+          'Hora Préstamo': p.horaPrestamo || '—',
+          'Hora Devolución': p.horaDevolucion || '—',
+          'Estado': p.estado === 'activo' ? 'En uso' : 'Devuelto',
+        }));
+
+        const ws = XLSX.utils.json_to_sheet(filas);
+
+        ws['!cols'] = [
+          { wch: 22 }, // Aprendiz
+          { wch: 14 }, // Tipo Documento
+          { wch: 15 }, // N° Documento
+          { wch: 12 }, // N° Ficha
+          { wch: 16 }, // Cantidad Equipos
+          { wch: 35 }, // Seriales
+          { wch: 35 }, // Equipos (Nombres)
+          { wch: 14 }, // Fecha
+          { wch: 16 }, // Hora Préstamo
+          { wch: 16 }, // Hora Devolución
+          { wch: 12 }, // Estado
+        ];
+
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, 'Historial Sala');
+
+        const fecha = new Date().toLocaleDateString('es-CO').replace(/\//g, '-');
+        XLSX.writeFile(wb, `Historial_Sala_Aprendices_${fecha}.xlsx`);
+        mostrarNotificacion('Archivo Excel descargado correctamente', 'exito');
+      } catch (e) {
+        mostrarNotificacion('Error al generar el Excel: ' + e.message, 'error');
+      }
+    };
+
+    // ── AUTO-REFRESH CADA 15 SEGUNDOS ────────────────────────
+    let tabActual = 'activos';
+    const _cambiarTabOriginal = cambiarTab;
+    // Registrar tab actual para el auto-refresh
+    document.getElementById('tab-activos').addEventListener('click', () => tabActual = 'activos');
+    document.getElementById('tab-historial').addEventListener('click', () => tabActual = 'historial');
+    setInterval(() => {
+      if (tabActual === 'activos') cargarActivos();
+      else cargarHistorial();
+    }, 15000);
+  </script>
+
+</body>
+</html>

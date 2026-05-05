@@ -1,0 +1,1121 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sistema Biblioteca — Préstamos</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+
+  <!-- ── SIDEBAR ─────────────────────────────────────────── -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <div class="icon-biblioteca">
+        <img src="img/LOGO-SENA.jpg" alt="Logo SENA" class="sidebar-logo-img" />
+      </div>
+      <h4>Biblioteca SENA</h4>
+      <p>Sistema de Gestión</p>
+    </div>
+    <nav>
+      <a href="index.html">
+        <span class="icono">
+          <img src="img/logo-dashboard.png" alt="Dashboard" class="sidebar-icon-img" />
+        </span>Dashboard</a>
+      <a href="equipos.html">
+        <span class="icono">
+          <img src="img/logo-equipos.png" alt="Equipos" class="sidebar-icon-img" />
+        </span>Equipos</a>
+      <a href="prestamos.html" class="activo">
+        <span class="icono">
+          <img src="img/logo-prestamos.png" alt="Préstamos" class="sidebar-icon-img" />
+        </span>Préstamos</a>
+      <a href="prestamos-aprendices.html">
+        <span class="icono">
+          <img src="img/logo-prestamos.png" alt="Préstamos Aprendices" class="sidebar-icon-img" />
+        </span>Préstamos Aprendices</a>
+      <a href="reservas.html">
+        <span class="icono">
+          <img src="img/logo-calendario.png" alt="Reservas de Sala" class="sidebar-icon-img" />
+        </span>Reservas de Sala</a>
+      <a href="usuarios.html">
+        <span class="icono">
+          <img src="img/logo-dashboard.png" alt="Usuarios" class="sidebar-icon-img" />
+        </span>Usuarios</a>
+      <a href="#" onclick="cerrarSesionAdmin()">
+        <span class="icono">
+          <img src="img/icon-cerrarsecion.png" alt="Cerrar Sesión" class="sidebar-icon-img" />
+        </span>Cerrar Sesión</a>
+    </nav>
+  </aside>
+
+  <!-- ── CONTENIDO PRINCIPAL ─────────────────────────────── -->
+  <main class="contenido-principal admin-page">
+
+    <header class="admin-page-hero">
+      <div class="admin-page-hero-text">
+        <h1>Gestión de préstamos</h1>
+        <p>Registra y controla los préstamos de equipos de la biblioteca</p>
+      </div>
+      <div class="admin-page-hero-actions">
+        <button type="button" class="btn btn-primary" onclick="abrirModalPrestamo()">+ Nuevo préstamo</button>
+      </div>
+    </header>
+
+    <!-- Pestañas -->
+    <div class="mb-4">
+      <ul class="nav nav-tabs admin-tabs border-0">
+        <li class="nav-item">
+          <button type="button" class="nav-link active" id="tab-activos" onclick="cambiarTab('activos')">
+            Préstamos activos
+            <span id="badge-activos" class="badge bg-danger ms-2" style="font-size:0.7rem; display:none;"></span>
+          </button>
+        </li>
+        <li class="nav-item">
+          <button type="button" class="nav-link" id="tab-solicitudes" onclick="cambiarTab('solicitudes')">
+            Solicitudes pendientes
+            <span id="badge-solicitudes" class="badge bg-warning text-dark ms-2" style="font-size:0.7rem; display:none;"></span>
+          </button>
+        </li>
+        <li class="nav-item">
+          <button type="button" class="nav-link" id="tab-historial" onclick="cambiarTab('historial')">
+            Historial completo
+          </button>
+        </li>
+      </ul>
+    </div>
+
+    <!-- Activos -->
+    <div id="contenido-activos">
+      <div class="card-custom admin-section-card">
+        <div class="card-header-custom">
+          <h5>Préstamos en curso</h5>
+          <span id="contador-activos" class="admin-meta"></span>
+        </div>
+        <div id="tabla-activos">
+          <div class="loading"><div class="spinner"></div><p>Cargando...</p></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Historial -->
+    <div id="contenido-historial" style="display:none;">
+      <div class="card-custom admin-toolbar mb-3">
+        <div class="card-body-custom">
+          <div class="row g-3 align-items-end">
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Buscar por documento</label>
+              <input type="text" class="form-control" id="buscar-nombre"
+                placeholder="Número de documento" oninput="cargarHistorial()" />
+            </div>
+            <div class="col-md-3">
+              <button class="btn btn-outline-secondary w-100" onclick="limpiarBusqueda()">🔄 Limpiar</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="card-custom admin-section-card">
+        <div class="card-header-custom">
+          <h5>Historial de préstamos</h5>
+          <div style="display:flex; align-items:center; gap:12px;">
+            <span id="contador-historial" class="admin-meta"></span>
+            <button type="button" class="btn btn-success btn-sm" onclick="descargarHistorialExcel()" title="Descargar historial en Excel">
+              📥 Descargar Excel
+            </button>
+          </div>
+        </div>
+        <div id="tabla-historial">
+          <div class="loading"><div class="spinner"></div><p>Cargando...</p></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Solicitudes pendientes -->
+    <div id="contenido-solicitudes" style="display:none;">
+      <div class="card-custom admin-section-card">
+        <div class="card-header-custom">
+          <h5>Solicitudes de usuarios</h5>
+          <span id="contador-solicitudes" class="admin-meta"></span>
+        </div>
+        <div id="tabla-solicitudes">
+          <div class="loading"><div class="spinner"></div><p>Cargando...</p></div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- ── MODAL APROBAR SOLICITUD ─────────────────────────────── -->
+  <div class="modal fade" id="modalAprobar" tabindex="-1">
+    <div class="modal-dialog modal-xl">
+      <div class="modal-content modal-sena">
+        <div class="modal-header">
+          <h5 class="modal-title fw-bold">Aprobar solicitud — Asignar equipos</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body p-4">
+          <div class="row g-4">
+            <!-- Info de la solicitud -->
+            <div class="col-md-4">
+              <h6 class="fw-bold mb-3 text-secondary">Datos del solicitante</h6>
+              <div class="mb-2"><strong>Nombre:</strong> <span id="aprobar-nombre">—</span></div>
+              <div class="mb-2"><strong>Documento:</strong> <span id="aprobar-doc">—</span></div>
+              <div class="mb-2"><strong>Dependencia:</strong> <span id="aprobar-dep">—</span></div>
+              <div class="mb-2"><strong>Cantidad solicitada:</strong> <span id="aprobar-cant" class="fw-bold text-primary" style="font-size:1.2rem;">—</span></div>
+              <div class="mb-2"><strong>Tipo de equipo:</strong> <span id="aprobar-tipo-equipo">—</span></div>
+              <div class="mb-2"><strong>Observaciones:</strong> <span id="aprobar-obs" class="text-muted">—</span></div>
+              <hr />
+              <div class="usuario-aviso-recibido">
+                💡 Selecciona los equipos que quieres asignar a esta solicitud. No es necesario que coincida exactamente con la cantidad solicitada.
+              </div>
+            </div>
+            <!-- Grilla de equipos -->
+            <div class="col-md-8">
+              <div class="d-flex justify-content-between align-items-center mb-3">
+                <h6 class="fw-bold mb-0 text-secondary">Selección de equipos</h6>
+                <span id="aprobar-contador" class="modal-contador-equipos">0 seleccionados</span>
+              </div>
+              <div class="mb-3">
+                <select class="form-select form-select-sm" id="aprobar-filtro-tipo" onchange="cargarEquiposAprobar()">
+                  <option value="">Todos los tipos</option>
+                  <option value="computador_portatil">💻 Computador Portátil</option>
+                  <option value="video_beam">📽️ Video Beam</option>
+                </select>
+              </div>
+              <div id="grilla-aprobar" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(195px,1fr)); gap:10px; max-height:400px; overflow-y:auto; padding-right:4px;">
+                <div class="loading"><div class="spinner"></div><p>Cargando...</p></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-danger me-auto" onclick="rechazarSolicitudActual()">Rechazar solicitud</button>
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="button" class="btn btn-success fw-bold" onclick="confirmarAprobacion()">✓ Aprobar y asignar equipos</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── MODAL NUEVO PRÉSTAMO ─────────────────────────────── -->
+  <div class="modal fade" id="modalPrestamo" tabindex="-1">
+    <div class="modal-dialog modal-xl">
+      <div class="modal-content modal-sena">
+        <div class="modal-header">
+          <h5 class="modal-title fw-bold">Registrar nuevo préstamo</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body p-4">
+          <div class="row g-4">
+            <!-- Datos del solicitante -->
+            <div class="col-md-5">
+              <h6 class="fw-bold mb-3 text-secondary">Datos del solicitante</h6>
+              <div class="mb-3">
+                <label class="form-label fw-semibold">Nombre completo <span class="text-danger">*</span></label>
+                <input type="text" class="form-control" id="prestamo-nombre" placeholder="Nombre completo" />
+              </div>
+              <div class="mb-3">
+                <label class="form-label fw-semibold">Documento de identidad <span class="text-danger">*</span></label>
+                <input type="text" class="form-control" id="prestamo-cargo" placeholder="Número de documento" />
+              </div>
+              <div class="mb-3">
+                <label class="form-label fw-semibold">Dependencia <span class="text-danger">*</span></label>
+                <input type="text" class="form-control" id="prestamo-dependencia" placeholder="Ej: Coordinación Académica..." />
+              </div>
+              <div class="mb-3">
+                <label class="form-label fw-semibold">Fecha y hora de salida <span class="text-danger">*</span></label>
+                <input type="datetime-local" class="form-control" id="prestamo-inicio" />
+              </div>
+              <div class="mb-3">
+                <label class="form-label fw-semibold">Observaciones</label>
+                <textarea class="form-control" id="prestamo-observaciones" rows="3" placeholder="Información adicional (opcional)"></textarea>
+              </div>
+            </div>
+            <!-- Selección de equipos -->
+            <div class="col-md-7">
+              <div class="d-flex justify-content-between align-items-center mb-3">
+                <h6 class="fw-bold mb-0 text-secondary">Selección de equipos</h6>
+                <span id="modal-contador" class="modal-contador-equipos">0 seleccionados</span>
+              </div>
+              <div class="mb-3">
+                <select class="form-select form-select-sm" id="modal-filtro-tipo" onchange="cargarEquiposModal()">
+                  <option value="">Todos los tipos</option>
+                  <option value="computador_portatil">💻 Computador Portátil</option>
+                  <option value="video_beam">📽️ Video Beam</option>
+                </select>
+              </div>
+              <div id="grilla-modal" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(195px,1fr)); gap:10px; max-height:400px; overflow-y:auto; padding-right:4px;">
+                <div class="loading"><div class="spinner"></div><p>Cargando...</p></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="button" class="btn btn-primary" onclick="guardarPrestamo()">Registrar Préstamo</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── MODAL DETALLE DEL GRUPO ───────────────────────────── -->
+  <div class="modal fade" id="modalDetalle" tabindex="-1">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable">
+      <div class="modal-content modal-sena">
+        <div class="modal-header">
+          <h5 class="modal-title fw-bold">Detalle del préstamo</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body p-0" id="contenido-detalle"></div>
+        <div class="modal-footer" id="footer-detalle">
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cerrar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+  <script src="js/api.js"></script>
+  <script>
+    // ── SESIÓN ADMIN ─────────────────────────────────────────
+    const token = sessionStorage.getItem('token');
+    const usuarioData = sessionStorage.getItem('usuario');
+    if (!token || !usuarioData) { window.location.href = 'login.html'; throw new Error('Sin sesión'); }
+    const usuarioActual = JSON.parse(usuarioData);
+    if (usuarioActual.rol !== 'admin') { window.location.href = 'usuario/index.html'; throw new Error('No es admin'); }
+
+    const cerrarSesionAdmin = () => {
+      if (confirm('¿Estás seguro que deseas cerrar sesión?')) {
+        sessionStorage.removeItem('token'); sessionStorage.removeItem('usuario');
+        window.location.href = 'login.html';
+      }
+    };
+
+    // ── PETICIÓN CON TOKEN ───────────────────────────────────
+    const api = async (url, metodo = 'GET', cuerpo = null) => {
+      try {
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 10000);
+        const opts = {
+          method: metodo,
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+          signal: controller.signal,
+        };
+        if (cuerpo) opts.body = JSON.stringify(cuerpo);
+        const r = await fetch(url, opts);
+        clearTimeout(timeout);
+        if (r.status === 401) { sessionStorage.removeItem('token'); sessionStorage.removeItem('usuario'); window.location.href = 'login.html'; return; }
+        const d = await r.json();
+        if (!r.ok) throw new Error(d.message || 'Error en la peticion');
+        return d;
+      } catch (e) {
+        if (e.name === 'AbortError') throw new Error('El servidor no responde. Verifica que el backend este corriendo en el puerto 3000.');
+        throw e;
+      }
+    };
+
+    // ── UTILIDADES ───────────────────────────────────────────
+    const fmt = (f) => f ? new Date(f).toLocaleString('es-CO', { dateStyle:'short', timeStyle:'short' }) : '—';
+
+    // ── AGRUPAR REGISTROS (por documento + mismo minuto de fechaSalida) ──
+    const agrupar = (registros) => {
+      const grupos = {};
+      registros.forEach(r => {
+        const minuto = new Date(r.fechaSalida).toISOString().slice(0, 16);
+        const clave  = `${r.documento}__${minuto}`;
+        if (!grupos[clave]) {
+          grupos[clave] = {
+            clave,
+            nombreCompleto: r.nombreCompleto,
+            documento: r.documento,
+            dependencia: r.dependencia,
+            fechaSalida: r.fechaSalida,
+            observaciones: r.observaciones,
+            tipoUsuario: r.usuario == null ? 'externo' : (r.usuario.rol === 'usuario' ? 'usuario' : 'admin'),
+            registros: [],
+          };
+        }
+        grupos[clave].registros.push(r);
+      });
+      return Object.values(grupos);
+    };
+
+    // ── BADGE DE TIPO DE SOLICITANTE ─────────────────────────
+    const badgeTipo = (tipo) => {
+      if (tipo === 'usuario') {
+        return `<span class="badge-tipo badge-tipo--usuario">👤 Usuario</span>`;
+      }
+      if (tipo === 'admin') {
+        return `<span class="badge-tipo badge-tipo--admin">🔧 Admin</span>`;
+      }
+      // tipo === 'externo': préstamo registrado manualmente por el admin
+      // para alguien que no tiene cuenta en el sistema
+      return `<span class="badge-tipo badge-tipo--externo">🌐 Externo</span>`;
+    };
+
+    // ── ESTADO DE TAB ────────────────────────────────────────
+    let tabActual = 'activos';
+    let grupoAbierto = null; // clave del grupo expandido en tabla inline
+    let gruposActivos = [];  // cache de grupos activos para no recargar siempre
+
+    const cambiarTab = (tab) => {
+      tabActual = tab;
+      document.getElementById('tab-activos').classList.toggle('active', tab === 'activos');
+      document.getElementById('tab-solicitudes').classList.toggle('active', tab === 'solicitudes');
+      document.getElementById('tab-historial').classList.toggle('active', tab === 'historial');
+      document.getElementById('contenido-activos').style.display = tab === 'activos' ? 'block' : 'none';
+      document.getElementById('contenido-solicitudes').style.display = tab === 'solicitudes' ? 'block' : 'none';
+      document.getElementById('contenido-historial').style.display = tab === 'historial' ? 'block' : 'none';
+      if (tab === 'activos') cargarActivos();
+      else if (tab === 'solicitudes') cargarSolicitudes();
+      else cargarHistorial();
+    };
+
+    // ── CARGAR ACTIVOS ───────────────────────────────────────
+    const cargarActivos = async () => {
+      const cont = document.getElementById('tabla-activos');
+      cont.innerHTML = `<div class="loading"><div class="spinner"></div><p>Cargando...</p></div>`;
+      grupoAbierto = null;
+
+      try {
+        const resp = await api(`${API_URL}/registros/buscar?estado=activo`);
+        const grupos = agrupar(resp.data);
+        gruposActivos = grupos;
+
+        const badge = document.getElementById('badge-activos');
+        if (grupos.length > 0) { badge.textContent = grupos.length; badge.style.display = 'inline'; }
+        else badge.style.display = 'none';
+
+        document.getElementById('contador-activos').textContent =
+          `${grupos.length} préstamo(s) · ${resp.total} equipo(s)`;
+
+        if (grupos.length === 0) {
+          cont.innerHTML = `<div class="estado-vacio"><div class="icono-vacio">📭</div><p>No hay préstamos activos</p></div>`;
+          return;
+        }
+
+        renderTablaActivos(grupos, cont);
+      } catch (e) {
+        cont.innerHTML = `<div class="estado-vacio"><div class="icono-vacio">❌</div><p>Error al cargar</p></div>`;
+      }
+    };
+
+    const renderTablaActivos = (grupos, cont) => {
+      let html = `
+        <div class="fila-header">
+          <div>Solicitante</div>
+          <div>Tipo</div>
+          <div>Documento</div>
+          <div>Dependencia</div>
+          <div>Equipos</div>
+          <div>Fecha Salida</div>
+          <div></div>
+        </div>`;
+
+      grupos.forEach(g => {
+        const devueltos = g.registros.filter(r => r.estado === 'finalizado').length;
+        const total     = g.registros.length;
+        const todo      = devueltos === total;
+        const abierto   = grupoAbierto === g.clave;
+
+        html += `
+          <div class="fila-grupo ${abierto ? 'abierto' : ''}" onclick="toggleGrupoActivo('${g.clave}', event)">
+            <div>
+              <strong>${g.nombreCompleto}</strong>
+              ${todo ? ' <span class="text-success small fw-semibold">· Completo</span>' : ''}
+            </div>
+            <div>${badgeTipo(g.tipoUsuario)}</div>
+            <div class="text-muted-soft">${g.documento}</div>
+            <div class="text-muted-soft">${g.dependencia}</div>
+            <div>
+              <span class="badge-equipos">${total} equipo${total > 1 ? 's' : ''}</span>
+              ${devueltos > 0 ? `<span class="ms-1 small text-muted">(${devueltos}/${total} devuelto${devueltos>1?'s':''})</span>` : ''}
+            </div>
+            <div class="text-muted-soft">${fmt(g.fechaSalida)}</div>
+            <div style="text-align:right;">
+              <span class="chevron ${abierto ? 'abierto' : ''}">▶</span>
+            </div>
+          </div>`;
+
+        // Panel expandible inline
+        html += `<div class="panel-detalle ${abierto ? 'visible' : ''}" id="panel-${g.clave.replace(/[^a-z0-9]/gi,'_')}">`;
+        html += renderPanelEquipos(g, false);
+        html += `</div>`;
+      });
+
+      cont.innerHTML = html;
+    };
+
+    // ── TOGGLE GRUPO EN TABLA INLINE ─────────────────────────
+    const toggleGrupoActivo = (clave, event) => {
+      // Si el clic viene de un botón interno, no colapsar
+      if (event.target.closest('button')) return;
+
+      grupoAbierto = (grupoAbierto === clave) ? null : clave;
+
+      const cont = document.getElementById('tabla-activos');
+      if (gruposActivos && gruposActivos.length > 0 && cont) {
+        renderTablaActivos(gruposActivos, cont);
+      }
+    };
+
+    // ── RENDERIZAR PANEL DE EQUIPOS ──────────────────────────
+    const esc = (s) => String(s ?? '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+
+    const renderPanelEquipos = (grupo, esModal) => {
+      const devueltos = grupo.registros.filter(r => r.estado === 'finalizado').length;
+      const total = grupo.registros.length;
+      const todosDevueltos = devueltos === total;
+      const pendientes = grupo.registros.filter(r => r.estado !== 'finalizado').map(r => r._id);
+
+      if (esModal) {
+        const filas = grupo.registros.map((r, i) => {
+          const devuelto = r.estado === 'finalizado';
+          return `
+            <tr class="${devuelto ? 'prestamo-detalle-row--done' : ''}">
+              <td><span class="prestamo-detalle-num">${devuelto ? '✓' : i + 1}</span></td>
+              <td><strong>${esc(r.equipo?.nombre ?? '') || '—'}</strong></td>
+              <td><code class="prestamo-detalle-serial">${esc(r.equipo?.serial ?? '') || '—'}</code></td>
+              <td>${devuelto
+                ? '<span class="badge-devuelto">Devuelto</span>'
+                : '<span class="badge-pendiente">Pendiente</span>'}</td>
+              <td class="prestamo-detalle-fecha">${devuelto ? fmt(r.fechaDevolucion) : fmt(r.fechaSalida)}</td>
+            </tr>`;
+        }).join('');
+
+        return `
+          <div class="prestamo-detalle prestamo-detalle--modal">
+            <div class="prestamo-detalle-modal-hero">
+              <div class="prestamo-detalle-modal-hero-text">
+                <h6 class="prestamo-detalle-modal-name">${esc(grupo.nombreCompleto)}</h6>
+                <p class="prestamo-detalle-modal-meta">${esc(grupo.documento)} · ${esc(grupo.dependencia)}</p>
+                <p class="prestamo-detalle-modal-salida">
+                  <span class="prestamo-detalle-label">Salida registrada</span>
+                  ${fmt(grupo.fechaSalida)}
+                </p>
+              </div>
+              <div class="prestamo-detalle-modal-badges">
+                ${todosDevueltos
+                  ? '<span class="prestamo-detalle-chip prestamo-detalle-chip--ok">Todos devueltos</span>'
+                  : `<span class="prestamo-detalle-chip prestamo-detalle-chip--warn">${total - devueltos} pendiente(s)</span>`}
+                <span class="prestamo-detalle-chip prestamo-detalle-chip--count">${total} equipo${total > 1 ? 's' : ''}</span>
+              </div>
+            </div>
+            <div class="prestamo-detalle-table-wrap">
+              <div class="table-responsive">
+                <table class="tabla-custom prestamo-detalle-tabla">
+                  <thead>
+                    <tr>
+                      <th>#</th>
+                      <th>Equipo</th>
+                      <th>Serial</th>
+                      <th>Estado</th>
+                      <th>Fecha</th>
+                    </tr>
+                  </thead>
+                  <tbody>${filas}</tbody>
+                </table>
+              </div>
+            </div>
+          </div>`;
+      }
+
+      let html = `
+        <div class="prestamo-detalle prestamo-detalle--inline">
+          <div class="detalle-header">
+            <div>
+              <strong>${esc(grupo.nombreCompleto)}</strong>
+              <span class="text-muted small ms-2">${esc(grupo.documento)} · ${esc(grupo.dependencia)}</span>
+            </div>
+            ${!todosDevueltos ? `
+              <button type="button" class="btn btn-success btn-sm" onclick='devolucionCompleta(${JSON.stringify(pendientes)})'>
+                Devolución completa
+              </button>` : '<span class="prestamo-detalle-chip prestamo-detalle-chip--ok">Todos devueltos</span>'}
+          </div>
+          <div class="prestamo-detalle-inline-body">`;
+
+      grupo.registros.forEach((r, i) => {
+        const devuelto = r.estado === 'finalizado';
+        html += `
+          <div class="equipo-fila${devuelto ? ' equipo-fila--devuelto' : ''}">
+            <div class="${devuelto ? 'check-devuelto' : 'num-orden'}">${devuelto ? '✓' : (i + 1)}</div>
+            <div>
+              <strong>${esc(r.equipo?.nombre ?? '') || '—'}</strong>
+              <div class="small text-muted">${esc(r.equipo?.serial ?? '')}</div>
+            </div>
+            <div>
+              ${devuelto
+                ? '<span class="badge-devuelto">Devuelto</span>'
+                : '<span class="badge-pendiente">Pendiente</span>'}
+            </div>
+            <div class="small text-muted">
+              ${devuelto ? fmt(r.fechaDevolucion) : fmt(r.fechaSalida)}
+            </div>
+            <div class="d-flex gap-2 justify-content-end">
+              ${!devuelto ? `
+                <button type="button" class="btn btn-sm btn-success" onclick="devolverEquipo('${r._id}')">
+                  Marcar devuelto
+                </button>` : ''}
+            </div>
+          </div>`;
+      });
+
+      html += '</div></div>';
+      return html;
+    };
+
+    // ── DEVOLVER UN EQUIPO INDIVIDUAL ────────────────────────
+    const devolverEquipo = async (id) => {
+      if (!confirm('¿Confirmas la devolución de este equipo?')) return;
+      try {
+        await api(`${API_URL}/registros/${id}/devolucion`, 'PATCH');
+        mostrarNotificacion('Equipo devuelto correctamente', 'exito');
+        cargarActivos();
+      } catch (e) {
+        mostrarNotificacion(e.message, 'error');
+      }
+    };
+
+    // ── DEVOLUCIÓN COMPLETA (todos los pendientes del grupo) ──
+    const devolucionCompleta = async (ids) => {
+      const n = ids.length;
+      if (!confirm(`¿Confirmas la devolución de todos los equipos pendientes (${n})?`)) return;
+      try {
+        await Promise.all(ids.map(id =>
+          api(`${API_URL}/registros/${id}/devolucion`, 'PATCH')
+        ));
+        mostrarNotificacion(`${n} equipo(s) devueltos correctamente`, 'exito');
+        // Cerrar modal si está abierto
+        const modal = bootstrap.Modal.getInstance(document.getElementById('modalDetalle'));
+        if (modal) modal.hide();
+        cargarActivos();
+      } catch (e) {
+        mostrarNotificacion(e.message, 'error');
+      }
+    };
+
+    // ── CARGAR HISTORIAL ─────────────────────────────────────
+    const cargarHistorial = async () => {
+      const cont = document.getElementById('tabla-historial');
+      cont.innerHTML = `<div class="loading"><div class="spinner"></div><p>Cargando...</p></div>`;
+
+      try {
+        const doc = document.getElementById('buscar-nombre').value.trim();
+        let url = `${API_URL}/registros/buscar`;
+        if (doc) url += `?documento=${encodeURIComponent(doc)}`;
+
+        const resp = await api(url);
+        const grupos = agrupar(resp.data);
+
+        document.getElementById('contador-historial').textContent =
+          `${grupos.length} préstamo(s) · ${resp.total} equipo(s)`;
+
+        if (grupos.length === 0) {
+          cont.innerHTML = `<div class="estado-vacio"><div class="icono-vacio">📭</div><p>No se encontraron registros</p></div>`;
+          return;
+        }
+
+        let html = `
+          <div class="fila-header fila-header--historial">
+            <div>Solicitante</div>
+            <div>Tipo</div>
+            <div>Documento</div>
+            <div>Dependencia</div>
+            <div>Equipos</div>
+            <div>Fecha Salida</div>
+            <div>Fecha Devolución</div>
+            <div>Estado</div>
+          </div>`;
+
+        grupos.forEach(g => {
+          const devueltos = g.registros.filter(r => r.estado === 'finalizado').length;
+          const total     = g.registros.length;
+          const todo      = devueltos === total;
+
+          // Fecha de devolución: la más reciente entre todos los registros del grupo
+          const maxDevolucion = g.registros.reduce((max, r) => {
+            if (!r.fechaDevolucion) return max;
+            const d = new Date(r.fechaDevolucion);
+            return !max || d > max ? d : max;
+          }, null);
+          const fmtDevolucion = maxDevolucion ? fmt(maxDevolucion) : '—';
+
+          html += `
+            <div class="fila-grupo fila-grupo--historial" onclick="verDetalleHistorial(${JSON.stringify(g).replace(/"/g,'&quot;')})">
+              <div><strong>${g.nombreCompleto}</strong></div>
+              <div>${badgeTipo(g.tipoUsuario)}</div>
+              <div class="text-muted-soft">${g.documento}</div>
+              <div class="text-muted-soft">${g.dependencia}</div>
+              <div><span class="badge-equipos">${total} equipo${total>1?'s':''}</span></div>
+              <div class="text-muted-soft">${fmt(g.fechaSalida)}</div>
+              <div class="text-muted-soft">${fmtDevolucion}</div>
+              <div>
+                ${todo
+                  ? '<span class="admin-badge-estado-finalizado">Finalizado</span>'
+                  : '<span class="admin-badge-estado-activo">Activo</span>'}
+              </div>
+            </div>`;
+
+        });
+
+        cont.innerHTML = html;
+
+      } catch (e) {
+        cont.innerHTML = `<div class="estado-vacio"><div class="icono-vacio">❌</div><p>Error al cargar historial</p></div>`;
+      }
+    };
+
+    // ── VER DETALLE EN MODAL (historial) ─────────────────────
+    const verDetalleHistorial = (grupo) => {
+      document.getElementById('contenido-detalle').innerHTML = renderPanelEquipos(grupo, true);
+      const footer = document.getElementById('footer-detalle');
+      footer.innerHTML = `<button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cerrar</button>`;
+      new bootstrap.Modal(document.getElementById('modalDetalle')).show();
+    };
+
+    // ── MODAL NUEVO PRÉSTAMO ─────────────────────────────────
+    let equiposSeleccionadosAdmin = [];
+    let equiposEnModal = [];
+
+    const abrirModalPrestamo = async () => {
+      equiposSeleccionadosAdmin = [];
+      document.getElementById('prestamo-nombre').value = '';
+      document.getElementById('prestamo-cargo').value = '';
+      document.getElementById('prestamo-dependencia').value = '';
+      document.getElementById('prestamo-observaciones').value = '';
+      document.getElementById('modal-filtro-tipo').value = '';
+
+      const ahora = new Date();
+      ahora.setMinutes(ahora.getMinutes() - ahora.getTimezoneOffset());
+      document.getElementById('prestamo-inicio').value = ahora.toISOString().slice(0, 16);
+
+      await cargarEquiposModal();
+      new bootstrap.Modal(document.getElementById('modalPrestamo')).show();
+    };
+
+    const cargarEquiposModal = async () => {
+      const grilla = document.getElementById('grilla-modal');
+      grilla.innerHTML = `<div class="loading"><div class="spinner"></div><p>Cargando...</p></div>`;
+      try {
+        const tipo = document.getElementById('modal-filtro-tipo').value;
+        const filtros = {};
+        if (tipo) filtros.tipo = tipo;
+        const resp = await equiposAPI.listar(filtros);
+        equiposEnModal = resp.data;
+        renderGrillaAdmin();
+      } catch (e) {
+        grilla.innerHTML = `<p style="color:#991b1b; padding:16px;">Error al cargar equipos</p>`;
+      }
+    };
+
+    const renderGrillaAdmin = () => {
+      const grilla = document.getElementById('grilla-modal');
+      if (equiposEnModal.length === 0) {
+        grilla.innerHTML = `<div class="estado-vacio"><div class="icono-vacio">📭</div><p>No hay equipos</p></div>`;
+        return;
+      }
+      grilla.innerHTML = equiposEnModal.map(e => {
+        const libre = e.estado === 'disponible';
+        const sel   = equiposSeleccionadosAdmin.includes(e._id);
+        return `
+          <div
+            class="equipo-chip ${libre ? 'disponible' : 'ocupado'} ${sel ? 'seleccionado' : ''}"
+            onclick="${libre ? `toggleAdminEquipo('${e._id}')` : ''}"
+            title="${libre ? 'Clic para seleccionar' : 'Equipo ocupado'}"
+            style="display:flex; align-items:center; gap:10px; padding:10px 14px; border-radius:10px; border:2px solid transparent; cursor:${libre?'pointer':'not-allowed'}; transition:all .15s; font-size:.875rem; font-weight:600;
+              background:${sel ? '#16a34a' : libre ? '#f0fdf4' : '#fef2f2'};
+              border-color:${sel ? '#15803d' : libre ? '#86efac' : '#fca5a5'};
+              color:${sel ? '#fff' : libre ? '#166534' : '#991b1b'}; opacity:${libre?1:.75};"
+          >
+            <span style="font-size:1.1rem;">${e.tipo === 'computador_portatil' ? '💻' : '📽️'}</span>
+            <div style="flex:1; min-width:0;">
+              <div style="font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${e.nombre}</div>
+              <div style="font-size:.75rem; opacity:.75; font-weight:400;">${e.serial}</div>
+            </div>
+            <span style="font-size:.7rem; font-weight:700; padding:2px 8px; border-radius:20px;
+              background:${sel ? 'rgba(255,255,255,.25)' : libre ? '#bbf7d0' : '#fecaca'};
+              color:${sel ? '#fff' : libre ? '#14532d' : '#7f1d1d'};">
+              ${libre ? (sel ? '✓' : 'Libre') : 'Ocupado'}
+            </span>
+          </div>`;
+      }).join('');
+      document.getElementById('modal-contador').textContent =
+        equiposSeleccionadosAdmin.length === 0
+          ? '0 seleccionados'
+          : `${equiposSeleccionadosAdmin.length} seleccionado${equiposSeleccionadosAdmin.length>1?'s':''}`;
+    };
+
+    const toggleAdminEquipo = (id) => {
+      const idx = equiposSeleccionadosAdmin.indexOf(id);
+      if (idx === -1) equiposSeleccionadosAdmin.push(id);
+      else equiposSeleccionadosAdmin.splice(idx, 1);
+      renderGrillaAdmin();
+    };
+
+    const guardarPrestamo = async () => {
+      const nombre      = document.getElementById('prestamo-nombre').value.trim();
+      const documento   = document.getElementById('prestamo-cargo').value.trim();
+      const dependencia = document.getElementById('prestamo-dependencia').value.trim();
+      const fechaSalida = document.getElementById('prestamo-inicio').value;
+      const obs         = document.getElementById('prestamo-observaciones').value.trim();
+
+      if (!nombre || !documento || !dependencia || !fechaSalida) {
+        mostrarNotificacion('Por favor completa todos los campos obligatorios', 'advertencia'); return;
+      }
+      if (equiposSeleccionadosAdmin.length === 0) {
+        mostrarNotificacion('Selecciona al menos un equipo', 'advertencia'); return;
+      }
+
+      try {
+        const resultados = await Promise.all(
+          equiposSeleccionadosAdmin.map(equipoId =>
+            fetch(`${API_URL}/registros`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+              body: JSON.stringify({ nombreCompleto: nombre, documento, dependencia, equipoId, fechaSalida, observaciones: obs }),
+            }).then(r => r.json())
+          )
+        );
+        const errores = resultados.filter(r => !r.success);
+        if (errores.length > 0) {
+          mostrarNotificacion(`${equiposSeleccionadosAdmin.length - errores.length} registrado(s). ${errores.length} falló: ${errores[0].message}`, 'advertencia');
+        } else {
+          const n = equiposSeleccionadosAdmin.length;
+          mostrarNotificacion(`${n} préstamo${n>1?'s':''} registrado${n>1?'s':''}`, 'exito');
+        }
+        bootstrap.Modal.getInstance(document.getElementById('modalPrestamo')).hide();
+        cargarActivos();
+      } catch (e) {
+        mostrarNotificacion('Error al registrar el préstamo', 'error');
+      }
+    };
+
+    const limpiarBusqueda = () => {
+      document.getElementById('buscar-nombre').value = '';
+      cargarHistorial();
+    };
+
+    // ── SOLICITUDES PENDIENTES ──────────────────────────────────
+    let solicitudActualId = null;
+    let equiposAprobarSeleccionados = [];
+    let equiposEnGrillaAprobar = [];
+
+    const cargarSolicitudes = async () => {
+      const cont = document.getElementById('tabla-solicitudes');
+      cont.innerHTML = `<div class="loading"><div class="spinner"></div><p>Cargando...</p></div>`;
+      try {
+        const resp = await solicitudesAPI.listar();
+        const solicitudes = resp.data;
+
+        const pendientes = solicitudes.filter(s => s.estado === 'pendiente');
+        const badge = document.getElementById('badge-solicitudes');
+        if (pendientes.length > 0) {
+          badge.textContent = pendientes.length;
+          badge.style.display = 'inline';
+        } else {
+          badge.style.display = 'none';
+        }
+
+        document.getElementById('contador-solicitudes').textContent =
+          `${solicitudes.length} solicitud(es) · ${pendientes.length} pendiente(s)`;
+
+        if (solicitudes.length === 0) {
+          cont.innerHTML = `<div class="estado-vacio"><div class="icono-vacio">📋</div><p>No hay solicitudes de usuarios</p></div>`;
+          return;
+        }
+
+        let html = `
+          <table class="tabla-custom">
+            <thead>
+              <tr>
+                <th>Solicitante</th>
+                <th>Documento</th>
+                <th>Dependencia</th>
+                <th>Tipo equipo</th>
+                <th>Cantidad</th>
+                <th>Fecha solicitud</th>
+                <th>Observaciones</th>
+                <th>Estado</th>
+                <th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody>`;
+
+        solicitudes.forEach(s => {
+          const fecha = new Date(s.fechaSolicitud).toLocaleString('es-CO', { dateStyle:'short', timeStyle:'short' });
+          let badge = '';
+          let acciones = '';
+          if (s.estado === 'pendiente') {
+            badge = '<span class="admin-badge-estado-activo">⏳ Pendiente</span>';
+            acciones = `<button class="btn btn-success btn-sm fw-bold" onclick="abrirModalAprobar('${s._id}')">Revisar</button>`;
+          } else if (s.estado === 'aprobada') {
+            badge = '<span class="admin-badge-estado-finalizado">✅ Aprobada</span>';
+            acciones = '<span class="text-muted small">Procesada</span>';
+          } else {
+            badge = '<span class="badge bg-danger text-white">❌ Rechazada</span>';
+            acciones = '<span class="text-muted small">Rechazada</span>';
+          }
+
+          let tipoLabel = '';
+          let cantLabelHtml = '';
+          
+          if (s.tipoEquipo === 'ambos') {
+            tipoLabel = '<span class="badge bg-secondary mb-1">💻 Portátil</span> <span class="badge bg-info text-dark">📽️ Video Beam</span>';
+            cantLabelHtml = `<div class="small"><strong>${s.cantidadPortatiles}</strong> portátil(es)<br><strong>${s.cantidadVideoBeams}</strong> video beam(s)</div>`;
+          } else if (s.tipoEquipo === 'video_beam') {
+            tipoLabel = '<span class="badge bg-info text-dark">📽️ Video Beam</span>';
+            cantLabelHtml = `<span class="badge-equipos">${s.cantidadVideoBeams || s.cantidadEquipos} video beam(s)</span>`;
+          } else {
+            tipoLabel = '<span class="badge bg-secondary">💻 Portátil</span>';
+            cantLabelHtml = `<span class="badge-equipos">${s.cantidadPortatiles || s.cantidadEquipos} portátil(es)</span>`;
+          }
+
+          html += `
+            <tr>
+              <td><strong>${esc(s.nombreCompleto)}</strong></td>
+              <td>${esc(s.documento)}</td>
+              <td>${esc(s.dependencia)}</td>
+              <td>${tipoLabel}</td>
+              <td>${cantLabelHtml}</td>
+              <td class="text-muted-soft">${fecha}</td>
+              <td class="text-muted">${s.observaciones || '—'}</td>
+              <td>${badge}</td>
+              <td>${acciones}</td>
+            </tr>`;
+        });
+
+        html += '</tbody></table>';
+        cont.innerHTML = html;
+
+      } catch (e) {
+        cont.innerHTML = `<div class="estado-vacio"><div class="icono-vacio">❌</div><p>Error al cargar solicitudes</p></div>`;
+      }
+    };
+
+    // Cargar badge de solicitudes al iniciar
+    const cargarBadgeSolicitudes = async () => {
+      try {
+        const resp = await solicitudesAPI.listar({ estado: 'pendiente' });
+        const badge = document.getElementById('badge-solicitudes');
+        if (resp.data.length > 0) {
+          badge.textContent = resp.data.length;
+          badge.style.display = 'inline';
+        } else {
+          badge.style.display = 'none';
+        }
+      } catch (e) { /* silencioso */ }
+    };
+
+    // ── MODAL APROBAR ──────────────────────────────────────────
+    const abrirModalAprobar = async (solicitudId) => {
+      solicitudActualId = solicitudId;
+      equiposAprobarSeleccionados = [];
+
+      // Buscar la solicitud en la lista
+      try {
+        const resp = await solicitudesAPI.listar();
+        const sol = resp.data.find(s => s._id === solicitudId);
+        if (!sol) { mostrarNotificacion('Solicitud no encontrada', 'error'); return; }
+
+        document.getElementById('aprobar-nombre').textContent = sol.nombreCompleto;
+        document.getElementById('aprobar-doc').textContent = sol.documento;
+        document.getElementById('aprobar-dep').textContent = sol.dependencia;
+        
+        if (sol.tipoEquipo === 'ambos') {
+          document.getElementById('aprobar-cant').innerHTML = `<strong>${sol.cantidadPortatiles}</strong> portátiles y <strong>${sol.cantidadVideoBeams}</strong> video beams`;
+          document.getElementById('aprobar-tipo-equipo').innerHTML = '<span class="badge bg-secondary mb-1">💻 Portátil</span> <span class="badge bg-info text-dark">📽️ Video Beam</span>';
+          document.getElementById('aprobar-filtro-tipo').value = '';
+        } else if (sol.tipoEquipo === 'video_beam') {
+          document.getElementById('aprobar-cant').textContent = sol.cantidadVideoBeams || sol.cantidadEquipos;
+          document.getElementById('aprobar-tipo-equipo').innerHTML = '<span class="badge bg-info text-dark">📽️ Video Beam</span>';
+          document.getElementById('aprobar-filtro-tipo').value = 'video_beam';
+        } else {
+          document.getElementById('aprobar-cant').textContent = sol.cantidadPortatiles || sol.cantidadEquipos;
+          document.getElementById('aprobar-tipo-equipo').innerHTML = '<span class="badge bg-secondary">💻 Computador Portátil</span>';
+          document.getElementById('aprobar-filtro-tipo').value = 'computador_portatil';
+        }
+
+        document.getElementById('aprobar-obs').textContent = sol.observaciones || 'Sin observaciones';
+
+        await cargarEquiposAprobar();
+        new bootstrap.Modal(document.getElementById('modalAprobar')).show();
+      } catch (e) {
+        mostrarNotificacion('Error al cargar solicitud', 'error');
+      }
+    };
+
+    const cargarEquiposAprobar = async () => {
+      const grilla = document.getElementById('grilla-aprobar');
+      grilla.innerHTML = `<div class="loading"><div class="spinner"></div><p>Cargando...</p></div>`;
+      try {
+        const tipo = document.getElementById('aprobar-filtro-tipo').value;
+        const filtros = {};
+        if (tipo) filtros.tipo = tipo;
+        const resp = await equiposAPI.listar(filtros);
+        equiposEnGrillaAprobar = resp.data;
+        renderGrillaAprobar();
+      } catch (e) {
+        grilla.innerHTML = `<p style="color:#991b1b; padding:16px;">Error al cargar equipos</p>`;
+      }
+    };
+
+    const renderGrillaAprobar = () => {
+      const grilla = document.getElementById('grilla-aprobar');
+      if (equiposEnGrillaAprobar.length === 0) {
+        grilla.innerHTML = `<div class="estado-vacio"><div class="icono-vacio">📭</div><p>No hay equipos</p></div>`;
+        return;
+      }
+      grilla.innerHTML = equiposEnGrillaAprobar.map(e => {
+        const libre = e.estado === 'disponible';
+        const sel   = equiposAprobarSeleccionados.includes(e._id);
+        return `
+          <div
+            class="equipo-chip ${libre ? 'disponible' : 'ocupado'} ${sel ? 'seleccionado' : ''}"
+            onclick="${libre ? `toggleAprobarEquipo('${e._id}')` : ''}"
+            title="${libre ? 'Clic para seleccionar' : 'Equipo ocupado'}"
+            style="display:flex; align-items:center; gap:10px; padding:10px 14px; border-radius:10px; border:2px solid transparent; cursor:${libre?'pointer':'not-allowed'}; transition:all .15s; font-size:.875rem; font-weight:600;
+              background:${sel ? '#16a34a' : libre ? '#f0fdf4' : '#fef2f2'};
+              border-color:${sel ? '#15803d' : libre ? '#86efac' : '#fca5a5'};
+              color:${sel ? '#fff' : libre ? '#166534' : '#991b1b'}; opacity:${libre?1:.75};"
+          >
+            <span style="font-size:1.1rem;">${e.tipo === 'computador_portatil' ? '💻' : '📽️'}</span>
+            <div style="flex:1; min-width:0;">
+              <div style="font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${e.nombre}</div>
+              <div style="font-size:.75rem; opacity:.75; font-weight:400;">${e.serial}</div>
+            </div>
+            <span style="font-size:.7rem; font-weight:700; padding:2px 8px; border-radius:20px;
+              background:${sel ? 'rgba(255,255,255,.25)' : libre ? '#bbf7d0' : '#fecaca'};
+              color:${sel ? '#fff' : libre ? '#14532d' : '#7f1d1d'};">
+              ${libre ? (sel ? '✓' : 'Libre') : 'Ocupado'}
+            </span>
+          </div>`;
+      }).join('');
+      document.getElementById('aprobar-contador').textContent =
+        equiposAprobarSeleccionados.length === 0
+          ? '0 seleccionados'
+          : `${equiposAprobarSeleccionados.length} seleccionado${equiposAprobarSeleccionados.length>1?'s':''}`;
+    };
+
+    const toggleAprobarEquipo = (id) => {
+      const idx = equiposAprobarSeleccionados.indexOf(id);
+      if (idx === -1) equiposAprobarSeleccionados.push(id);
+      else equiposAprobarSeleccionados.splice(idx, 1);
+      renderGrillaAprobar();
+    };
+
+    const confirmarAprobacion = async () => {
+      if (equiposAprobarSeleccionados.length === 0) {
+        mostrarNotificacion('Selecciona al menos un equipo para asignar', 'advertencia');
+        return;
+      }
+      if (!confirm(`¿Confirmas asignar ${equiposAprobarSeleccionados.length} equipo(s) a esta solicitud?`)) return;
+
+      try {
+        await solicitudesAPI.aprobar(solicitudActualId, equiposAprobarSeleccionados);
+        mostrarNotificacion('Solicitud aprobada y equipos asignados correctamente', 'exito');
+        bootstrap.Modal.getInstance(document.getElementById('modalAprobar')).hide();
+        cargarSolicitudes();
+        cargarBadgeSolicitudes();
+      } catch (e) {
+        mostrarNotificacion(e.message, 'error');
+      }
+    };
+
+    const rechazarSolicitudActual = async () => {
+      const motivo = prompt('¿Motivo del rechazo? (opcional)');
+      if (motivo === null) return; // canceló
+
+      try {
+        await solicitudesAPI.rechazar(solicitudActualId, motivo);
+        mostrarNotificacion('Solicitud rechazada', 'exito');
+        bootstrap.Modal.getInstance(document.getElementById('modalAprobar')).hide();
+        cargarSolicitudes();
+        cargarBadgeSolicitudes();
+      } catch (e) {
+        mostrarNotificacion(e.message, 'error');
+      }
+    };
+
+    // ── DESCARGAR HISTORIAL EN EXCEL ─────────────────────────
+    const descargarHistorialExcel = async () => {
+      try {
+        mostrarNotificacion('Generando archivo Excel...', 'exito');
+        const resp = await api(`${API_URL}/registros/buscar`);
+        const grupos = agrupar(resp.data);
+
+        if (grupos.length === 0) {
+          mostrarNotificacion('No hay datos para descargar', 'advertencia');
+          return;
+        }
+
+        const filas = [];
+        grupos.forEach(g => {
+          const devueltos = g.registros.filter(r => r.estado === 'finalizado').length;
+          const total = g.registros.length;
+          const estadoGrupo = devueltos === total ? 'Finalizado' : 'Activo';
+
+          g.registros.forEach((r, i) => {
+            filas.push({
+              'Solicitante': g.nombreCompleto,
+              'Tipo': g.tipoUsuario === 'usuario' ? 'Usuario' : g.tipoUsuario === 'admin' ? 'Admin' : 'Externo',
+              'Documento': g.documento,
+              'Dependencia': g.dependencia,
+              'Equipo': r.equipo?.nombre || '—',
+              'Serial': r.equipo?.serial || '—',
+              'Estado Equipo': r.estado === 'finalizado' ? 'Devuelto' : 'Pendiente',
+              'Fecha Salida': r.fechaSalida ? new Date(r.fechaSalida).toLocaleString('es-CO') : '—',
+              'Fecha Devolución': r.fechaDevolucion ? new Date(r.fechaDevolucion).toLocaleString('es-CO') : '—',
+              'Estado Préstamo': estadoGrupo,
+              'Observaciones': g.observaciones || '',
+            });
+          });
+        });
+
+        const ws = XLSX.utils.json_to_sheet(filas);
+
+        // Ajustar anchos de columna
+        ws['!cols'] = [
+          { wch: 22 }, // Solicitante
+          { wch: 10 }, // Tipo
+          { wch: 15 }, // Documento
+          { wch: 25 }, // Dependencia
+          { wch: 20 }, // Equipo
+          { wch: 18 }, // Serial
+          { wch: 14 }, // Estado Equipo
+          { wch: 22 }, // Fecha Salida
+          { wch: 22 }, // Fecha Devolución
+          { wch: 16 }, // Estado Préstamo
+          { wch: 30 }, // Observaciones
+        ];
+
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, 'Historial Préstamos');
+
+        const fecha = new Date().toLocaleDateString('es-CO').replace(/\//g, '-');
+        XLSX.writeFile(wb, `Historial_Prestamos_${fecha}.xlsx`);
+        mostrarNotificacion('Archivo Excel descargado correctamente', 'exito');
+      } catch (e) {
+        mostrarNotificacion('Error al generar el Excel: ' + e.message, 'error');
+      }
+    };
+
+    cargarActivos();
+    cargarBadgeSolicitudes();
+
+    // ── AUTO-REFRESH CADA 15 SEGUNDOS ────────────────────────
+    setInterval(() => {
+      if (tabActual === 'activos') cargarActivos();
+      else if (tabActual === 'solicitudes') cargarSolicitudes();
+      else cargarHistorial();
+      cargarBadgeSolicitudes();
+    }, 15000);
+  </script>
+
+</body>
+</html>

@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sistema Biblioteca — Solicitar Préstamo</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link rel="stylesheet" href="../css/styles.css" />
+</head>
+<body>
+
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <div class="icon-biblioteca">
+        <img src="../img/LOGO-SENA.jpg" alt="Logo SENA" class="sidebar-logo-img" />
+      </div>
+      <h4>Biblioteca SENA</h4>
+      <p id="nombre-usuario">Cargando...</p>
+    </div>
+    <nav>
+      <a href="index.html" class="activo">
+        <span class="icono">
+          <img src="../img/logo-equipos.png" alt="Solicitar Préstamo" class="sidebar-icon-img" />
+        </span>Solicitar Préstamo</a>
+      <a href="prestamo.html">
+        <span class="icono">
+          <img src="../img/logo-prestamos.png" alt="Mis Préstamos" class="sidebar-icon-img" />
+        </span>Mis Préstamos</a>
+      <a href="sala.html">
+        <span class="icono">
+          <img src="../img/logo-calendario.png" alt="Reservar Sala" class="sidebar-icon-img" />
+        </span>Reservar Sala</a>
+      <a href="#" onclick="cerrarSesion()">
+        <span class="icono">
+          <img src="../img/icon-cerrarsecion.png" alt="Cerrar Sesión" class="sidebar-icon-img" />
+        </span>Cerrar Sesión</a>
+    </nav>
+  </aside>
+
+  <main class="contenido-principal usuario-panel">
+
+    <header class="admin-page-hero">
+      <div class="admin-page-hero-text">
+        <h1>Solicitar préstamo de equipos</h1>
+        <p>Indica el tipo de equipo y la cantidad que necesitas, el administrador se encargará de asignarlos</p>
+      </div>
+    </header>
+
+    <!-- Formulario de solicitud -->
+    <div class="row g-4 mb-4">
+      <div class="col-lg-5">
+        <div class="card-custom admin-section-card">
+          <div class="card-header-custom">
+            <h5>Nueva solicitud</h5>
+          </div>
+          <div class="card-body-custom">
+
+            <div class="mb-3">
+              <label class="form-label fw-semibold">Nombre completo <span class="text-danger">*</span></label>
+              <input type="text" class="form-control" id="sol-nombre" placeholder="Tu nombre completo" />
+            </div>
+            <div class="mb-3">
+              <label class="form-label fw-semibold">Documento de identidad <span class="text-danger">*</span></label>
+              <input type="text" class="form-control" id="sol-documento" placeholder="Tu número de documento" />
+            </div>
+            <div class="mb-3">
+              <label class="form-label fw-semibold">Dependencia <span class="text-danger">*</span></label>
+              <input type="text" class="form-control" id="sol-dependencia" placeholder="Ej: Coordinación Académica..." />
+            </div>
+            <div class="row mb-3">
+              <div class="col-6">
+                <label class="form-label fw-semibold">Cantidad de portátiles <span class="text-danger">*</span></label>
+                <input type="number" class="form-control" id="sol-portatiles" min="0" max="8" value="0" style="font-size:1.2rem; font-weight:700; text-align:center;" />
+                <small class="text-muted">Máximo 8</small>
+              </div>
+              <div class="col-6">
+                <label class="form-label fw-semibold">Cantidad de video beams <span class="text-danger">*</span></label>
+                <input type="number" class="form-control" id="sol-videobeams" min="0" max="1" value="0" style="font-size:1.2rem; font-weight:700; text-align:center;" />
+                <small class="text-muted">Máximo 1</small>
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label fw-semibold">Fecha solicitud <span class="text-danger">*</span></label>
+              <input type="datetime-local" class="form-control" id="sol-fecha" />
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label fw-semibold">Observaciones</label>
+              <textarea class="form-control" id="sol-observaciones" rows="2" placeholder="Información adicional (opcional)"></textarea>
+            </div>
+
+            <div class="usuario-aviso-recibido" id="aviso-solicitud">
+              💡 Al enviar tu solicitud, el administrador la revisará y asignará los equipos disponibles. 
+              Recibirás la confirmación cuando sea aprobada.
+            </div>
+
+            <button type="button" class="btn btn-primary w-100 mt-3 fw-bold" onclick="enviarSolicitud()" style="padding:12px;">
+              📤 Enviar solicitud
+            </button>
+
+          </div>
+        </div>
+      </div>
+
+      <!-- Mis solicitudes -->
+      <div class="col-lg-7">
+        <div class="card-custom admin-section-card">
+          <div class="card-header-custom">
+            <h5>Mis solicitudes</h5>
+            <span id="contador-solicitudes" class="admin-meta"></span>
+          </div>
+          <div id="contenedor-solicitudes">
+            <div class="loading"><div class="spinner"></div><p>Cargando...</p></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="../js/api.js"></script>
+  <script>
+
+    // ── VERIFICAR SESIÓN ─────────────────────────────────────
+    const token = sessionStorage.getItem('token');
+    const usuarioData = sessionStorage.getItem('usuario');
+    if (!token || !usuarioData) { window.location.href = '../login.html'; throw new Error('Sin sesión'); }
+    const usuario = JSON.parse(usuarioData);
+    if (usuario.rol === 'admin') { window.location.href = '../index.html'; throw new Error('Redirigiendo a admin'); }
+    document.getElementById('nombre-usuario').textContent = usuario.nombreCompleto;
+
+    // ── CERRAR SESIÓN ────────────────────────────────────────
+    const cerrarSesion = () => {
+      if (confirm('¿Estás seguro que deseas cerrar sesión?')) {
+        sessionStorage.removeItem('token');
+        sessionStorage.removeItem('usuario');
+        window.location.href = '../login.html';
+      }
+    };
+
+    // ── PRELLENAR FORMULARIO ─────────────────────────────────
+    const preLlenar = () => {
+      document.getElementById('sol-nombre').value = usuario.nombreCompleto || '';
+      document.getElementById('sol-documento').value = usuario.documento || '';
+      document.getElementById('sol-dependencia').value = usuario.dependencia || '';
+      document.getElementById('sol-portatiles').value = 0;
+      document.getElementById('sol-videobeams').value = 0;
+      document.getElementById('sol-observaciones').value = '';
+
+      const ahora = new Date();
+      ahora.setMinutes(ahora.getMinutes() - ahora.getTimezoneOffset());
+      document.getElementById('sol-fecha').value = ahora.toISOString().slice(0, 16);
+    };
+
+    // ── ENVIAR SOLICITUD ─────────────────────────────────────
+    const enviarSolicitud = async () => {
+      const datos = {
+        nombreCompleto: document.getElementById('sol-nombre').value.trim(),
+        documento: document.getElementById('sol-documento').value.trim(),
+        dependencia: document.getElementById('sol-dependencia').value.trim(),
+        cantidadPortatiles: parseInt(document.getElementById('sol-portatiles').value) || 0,
+        cantidadVideoBeams: parseInt(document.getElementById('sol-videobeams').value) || 0,
+        fechaSolicitud: document.getElementById('sol-fecha').value,
+        observaciones: document.getElementById('sol-observaciones').value.trim(),
+      };
+
+      if (!datos.nombreCompleto || !datos.documento || !datos.dependencia || !datos.fechaSolicitud) {
+        mostrarNotificacion('Por favor completa todos los campos obligatorios', 'advertencia');
+        return;
+      }
+      if (datos.cantidadPortatiles === 0 && datos.cantidadVideoBeams === 0) {
+        mostrarNotificacion('Debes solicitar al menos un equipo', 'advertencia');
+        return;
+      }
+      if (datos.cantidadPortatiles > 8) {
+        mostrarNotificacion('La cantidad máxima de portátiles es 8', 'advertencia');
+        return;
+      }
+      if (datos.cantidadVideoBeams > 1) {
+        mostrarNotificacion('La cantidad máxima de video beams es 1', 'advertencia');
+        return;
+      }
+
+      try {
+        await solicitudesAPI.crear(datos);
+        mostrarNotificacion('¡Solicitud enviada! El administrador la revisará pronto.', 'exito');
+        preLlenar();
+        cargarMisSolicitudes();
+      } catch (error) {
+        mostrarNotificacion(error.message, 'error');
+      }
+    };
+
+    // ── CARGAR MIS SOLICITUDES ───────────────────────────────
+    const cargarMisSolicitudes = async () => {
+      const cont = document.getElementById('contenedor-solicitudes');
+      cont.innerHTML = `<div class="loading"><div class="spinner"></div><p>Cargando...</p></div>`;
+      try {
+        const resp = await solicitudesAPI.misSolicitudes();
+        const solicitudes = resp.data;
+
+        document.getElementById('contador-solicitudes').textContent =
+          `${solicitudes.length} solicitud(es)`;
+
+        if (solicitudes.length === 0) {
+          cont.innerHTML = `<div class="estado-vacio"><div class="icono-vacio">📋</div><p>Aún no has enviado ninguna solicitud</p></div>`;
+          return;
+        }
+
+        let html = `
+          <table class="tabla-custom">
+            <thead>
+              <tr>
+                <th>Fecha</th>
+                <th>Tipo</th>
+                <th>Cantidad</th>
+                <th>Estado</th>
+                <th>Observaciones</th>
+              </tr>
+            </thead>
+            <tbody>`;
+
+        solicitudes.forEach(s => {
+          const fecha = new Date(s.fechaSolicitud).toLocaleString('es-CO', { dateStyle:'short', timeStyle:'short' });
+          let badge = '';
+          if (s.estado === 'pendiente') {
+            badge = '<span class="admin-badge-estado-activo">⏳ Pendiente</span>';
+          } else if (s.estado === 'aprobada') {
+            badge = '<span class="admin-badge-estado-finalizado">✅ Aprobada</span>';
+          } else {
+            badge = `<span class="badge bg-danger text-white">❌ Rechazada</span>`;
+          }
+
+          let tipoIcon = '';
+          let cantidadText = '';
+          if (s.tipoEquipo === 'ambos') {
+            tipoIcon = '💻 Portátiles y 📽️ Video Beams';
+            cantidadText = `<strong>${s.cantidadPortatiles}</strong> portátil(es)<br><strong>${s.cantidadVideoBeams}</strong> video beam(s)`;
+          } else if (s.tipoEquipo === 'video_beam') {
+            tipoIcon = '📽️ Video Beam';
+            cantidadText = `<strong>${s.cantidadVideoBeams || s.cantidadEquipos}</strong> video beam(s)`;
+          } else {
+            tipoIcon = '💻 Portátil';
+            cantidadText = `<strong>${s.cantidadPortatiles || s.cantidadEquipos}</strong> portátil(es)`;
+          }
+
+          html += `
+            <tr>
+              <td>${fecha}</td>
+              <td>${tipoIcon}</td>
+              <td>${cantidadText}</td>
+              <td>${badge}</td>
+              <td class="text-muted">${s.observaciones || '—'}${s.motivoRechazo ? '<br><small class="text-danger">Motivo: ' + s.motivoRechazo + '</small>' : ''}</td>
+            </tr>`;
+        });
+
+        html += '</tbody></table>';
+        cont.innerHTML = html;
+
+      } catch (error) {
+        cont.innerHTML = `<div class="estado-vacio"><div class="icono-vacio">❌</div><p>Error al cargar solicitudes</p></div>`;
+      }
+    };
+
+    // Iniciar
+    preLlenar();
+    cargarMisSolicitudes();
+
+    // ── AUTO-REFRESH CADA 15 SEGUNDOS ────────────────────────
+    setInterval(cargarMisSolicitudes, 15000);
+
+  </script>
+
+</body>
+</html>

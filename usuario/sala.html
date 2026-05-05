@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sistema Biblioteca — Reservar Sala</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link rel="stylesheet" href="../css/styles.css" />
+</head>
+<body>
+
+  <!-- ── SIDEBAR ─────────────────────────────────────────── -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <div class="icon-biblioteca">
+        <img src="../img/LOGO-SENA.jpg" alt="Logo SENA" class="sidebar-logo-img" />
+      </div>
+      <h4>Biblioteca SENA</h4>
+      <p id="nombre-usuario">Cargando...</p>
+    </div>
+    <nav>
+      <a href="index.html">
+        <span class="icono">
+          <img src="../img/logo-equipos.png" alt="Solicitar Préstamo" class="sidebar-icon-img" />
+        </span>Solicitar Préstamo
+      </a>
+      <a href="prestamo.html">
+        <span class="icono">
+          <img src="../img/logo-prestamos.png" alt="Mis Préstamos" class="sidebar-icon-img" />
+        </span>Mis Préstamos
+      </a>
+      <a href="sala.html" class="activo">
+        <span class="icono">
+          <img src="../img/logo-calendario.png" alt="Reservar Sala" class="sidebar-icon-img" />
+        </span>Reservar Sala
+      </a>
+      <a href="#" onclick="cerrarSesion()">
+        <span class="icono">
+          <img src="../img/icon-cerrarsecion.png" alt="Cerrar Sesión" class="sidebar-icon-img" />
+        </span>Cerrar Sesión
+      </a>
+    </nav>
+  </aside>
+
+  <!-- ── CONTENIDO PRINCIPAL ─────────────────────────────── -->
+  <main class="contenido-principal usuario-panel">
+
+    <header class="admin-page-hero">
+      <div class="admin-page-hero-text">
+        <h1>Reservar sala</h1>
+        <p>Consulta la ocupación por franja y gestiona tus reservas de la sala de biblioteca</p>
+      </div>
+      <div class="admin-page-hero-actions">
+        <button type="button" class="btn btn-primary" onclick="abrirModalReserva()">Nueva reserva</button>
+      </div>
+    </header>
+
+    <!-- Filtro por fecha -->
+    <div class="card-custom admin-toolbar mb-4">
+      <div class="card-body-custom">
+        <div class="row g-3 align-items-end">
+          <div class="col-md-4">
+            <label class="form-label fw-semibold">Ver reservas por fecha</label>
+            <input type="date" class="form-control" id="filtro-fecha" onchange="cargarReservas()" />
+          </div>
+          <div class="col-md-4">
+            <button type="button" class="btn btn-outline-secondary" onclick="verHoy()">
+              Ver hoy
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Horario visual -->
+    <div class="card-custom admin-section-card mb-4" id="card-horario" style="display:none;">
+      <div class="card-header-custom">
+        <h5>Ocupación del día</h5>
+        <span id="fecha-horario-label" class="admin-meta"></span>
+      </div>
+      <div class="card-body-custom">
+        <div id="horario-visual"></div>
+      </div>
+    </div>
+
+    <!-- Lista de reservas -->
+    <div class="card-custom admin-section-card">
+      <div class="card-header-custom">
+        <h5>Reservas del día</h5>
+        <span id="contador-reservas" class="admin-meta"></span>
+      </div>
+      <div id="contenedor-reservas">
+        <div class="estado-vacio">
+          <div class="icono-vacio">📅</div>
+          <p>Selecciona una fecha para ver las reservas</p>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- ── MODAL NUEVA RESERVA ──────────────────────────────── -->
+  <div class="modal fade" id="modalReserva" tabindex="-1">
+    <div class="modal-dialog">
+      <div class="modal-content modal-sena">
+        <div class="modal-header">
+          <h5 class="modal-title fw-bold">Nueva reserva de sala</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body p-4">
+          <div class="row g-3">
+
+            <div class="col-12">
+              <label class="form-label fw-semibold">
+                Nombre completo <span class="text-danger">*</span>
+              </label>
+              <input type="text" class="form-control" id="reserva-nombre" placeholder="Tu nombre completo" />
+            </div>
+
+            <div class="col-12">
+              <label class="form-label fw-semibold">
+                Fecha de la reserva <span class="text-danger">*</span>
+              </label>
+              <input type="date" class="form-control" id="reserva-fecha" onchange="actualizarSelectsSegunFecha()" />
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">
+                Hora de inicio <span class="text-danger">*</span>
+              </label>
+              <select class="form-select" id="reserva-hora-inicio" onchange="actualizarSelectFin()">
+                <option value="">Selecciona hora...</option>
+              </select>
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">
+                Hora de fin <span class="text-danger">*</span>
+              </label>
+              <select class="form-select" id="reserva-hora-fin">
+                <option value="">Selecciona hora...</option>
+              </select>
+            </div>
+
+            <div class="col-12">
+              <label class="form-label fw-semibold">
+                Motivo <span class="text-danger">*</span>
+              </label>
+              <textarea class="form-control" id="reserva-motivo" rows="3" placeholder="Describe el motivo de la reserva"></textarea>
+            </div>
+
+          </div>
+
+          <div class="usuario-aviso-sala">
+            El sistema evita solapamientos en el mismo horario. Cada franja es de 30 minutos.
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="button" class="btn btn-primary" onclick="guardarReserva()">Crear reserva</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="../js/api.js"></script>
+  <script>
+
+    // ── VERIFICAR SESIÓN ─────────────────────────────────────
+    const token = sessionStorage.getItem('token');
+    const usuarioData = sessionStorage.getItem('usuario');
+    if (!token || !usuarioData) {
+      window.location.href = '../login.html';
+      throw new Error('Sin sesión');
+    }
+
+    const usuario = JSON.parse(usuarioData);
+
+    // Si es admin, redirigirlo a su panel
+    if (usuario.rol === 'admin') {
+      window.location.href = '../index.html';
+      throw new Error('Redirigiendo a admin');
+    }
+
+    document.getElementById('nombre-usuario').textContent = usuario.nombreCompleto;
+
+    // ── FRANJAS DE 30 MINUTOS (7:00 AM a 9:30 PM) ───────────
+    const FRANJAS = [
+      '07:00','07:30','08:00','08:30','09:00','09:30',
+      '10:00','10:30','11:00','11:30','12:00','12:30',
+      '13:00','13:30','14:00','14:30','15:00','15:30',
+      '16:00','16:30','17:00','17:30','18:00','18:30',
+      '19:00','19:30','20:00','20:30','21:00','21:30',
+    ];
+
+    // ── CONVERTIR HH:MM A FORMATO 12H AM/PM ─────────────────
+    const aAMPM = (hora24) => {
+      if (!hora24) return '';
+      const partes = hora24.split(':');
+      let h = parseInt(partes[0]);
+      const m = partes[1];
+      const periodo = h >= 12 ? 'PM' : 'AM';
+      if (h > 12) h -= 12;
+      if (h === 0) h = 12;
+      return h + ':' + m + ' ' + periodo;
+    };
+
+    // ── VERIFICAR SI UNA FRANJA YA PASÓ ─────────────────────
+    const yaEsPasado = (fecha, franja) => {
+      const ahora = new Date();
+      const fechaHora = new Date(fecha + 'T' + franja + ':00');
+      return fechaHora < ahora;
+    };
+
+    // ── LLENAR SELECT INICIO SEGÚN FECHA ─────────────────────
+    const llenarSelectInicio = (fecha) => {
+      const selectInicio = document.getElementById('reserva-hora-inicio');
+      const hoy = new Date().toISOString().split('T')[0];
+      selectInicio.innerHTML = '<option value="">Selecciona hora...</option>';
+
+      FRANJAS.slice(0, -1).forEach(function(f) {
+        // Si es hoy y esa hora ya pasó, no la mostramos
+        if (fecha === hoy && yaEsPasado(fecha, f)) return;
+        const opt = document.createElement('option');
+        opt.value = f;
+        opt.textContent = aAMPM(f);
+        selectInicio.appendChild(opt);
+      });
+    };
+
+    // ── ACTUALIZAR SELECT INICIO CUANDO CAMBIA FECHA ────────
+    const actualizarSelectsSegunFecha = () => {
+      const fecha = document.getElementById('reserva-fecha').value;
+      document.getElementById('reserva-hora-fin').innerHTML =
+        '<option value="">Selecciona hora...</option>';
+      llenarSelectInicio(fecha);
+    };
+
+    // ── ACTUALIZAR SELECT FIN CUANDO CAMBIA INICIO ───────────
+    const actualizarSelectFin = () => {
+      const inicioSeleccionado = document.getElementById('reserva-hora-inicio').value;
+      const selectFin = document.getElementById('reserva-hora-fin');
+      selectFin.innerHTML = '<option value="">Selecciona hora...</option>';
+      if (!inicioSeleccionado) return;
+
+      const indexInicio = FRANJAS.indexOf(inicioSeleccionado);
+      FRANJAS.slice(indexInicio + 1).forEach(function(f) {
+        const opt = document.createElement('option');
+        opt.value = f;
+        opt.textContent = aAMPM(f);
+        selectFin.appendChild(opt);
+      });
+    };
+
+    // ── CERRAR SESIÓN ────────────────────────────────────────
+    const cerrarSesion = () => {
+      if (confirm('¿Estás seguro que deseas cerrar sesión?')) {
+        sessionStorage.removeItem('token');
+        sessionStorage.removeItem('usuario');
+        window.location.href = '../login.html';
+      }
+    };
+
+    // ── VER HOY ──────────────────────────────────────────────
+    const verHoy = () => {
+      const hoy = new Date().toISOString().split('T')[0];
+      document.getElementById('filtro-fecha').value = hoy;
+      cargarReservas();
+    };
+
+    // ── CARGAR RESERVAS ──────────────────────────────────────
+    const cargarReservas = async () => {
+      const fecha = document.getElementById('filtro-fecha').value;
+      const contenedor = document.getElementById('contenedor-reservas');
+
+      if (!fecha) {
+        contenedor.innerHTML = '<div class="estado-vacio"><div class="icono-vacio">📅</div><p>Selecciona una fecha para ver las reservas</p></div>';
+        document.getElementById('card-horario').style.display = 'none';
+        return;
+      }
+
+      contenedor.innerHTML = '<div class="loading"><div class="spinner"></div><p>Cargando reservas...</p></div>';
+
+      try {
+        const respuesta = await reservasAPI.listar({ fecha });
+        const reservas = respuesta.data;
+
+        document.getElementById('contador-reservas').textContent =
+          respuesta.total + ' reserva(s)';
+
+        mostrarHorarioVisual(reservas, fecha);
+
+        if (reservas.length === 0) {
+          contenedor.innerHTML = '<div class="estado-vacio"><div class="icono-vacio">✅</div><p>No hay reservas para esta fecha. ¡La sala está libre!</p></div>';
+          return;
+        }
+
+        let filas = '';
+        reservas.forEach(function(r) {
+          const cancelar = r.estado === 'activa' && r.nombreSolicitante === usuario.nombreCompleto
+            ? '<button class="btn btn-sm btn-outline-danger" onclick="confirmarCancelar(\'' + r._id + '\')">❌ Cancelar</button>'
+            : '—';
+
+          filas += '<tr class="' + (r.estado === 'cancelada' ? 'opacity-50' : '') + '">'
+            + '<td><strong>' + r.nombreSolicitante + '</strong></td>'
+            + '<td><span class="admin-time-pill">' + aAMPM(r.horaInicio) + ' — ' + aAMPM(r.horaFin) + '</span></td>'
+            + '<td style="color:#6b7280;">' + r.motivo + '</td>'
+            + '<td>' + badgeEstado(r.estado) + '</td>'
+            + '<td>' + cancelar + '</td>'
+            + '</tr>';
+        });
+
+        contenedor.innerHTML = '<div class="table-responsive"><table class="tabla-custom"><thead><tr><th>Solicitante</th><th>Horario</th><th>Motivo</th><th>Estado</th><th>Acciones</th></tr></thead><tbody>' + filas + '</tbody></table></div>';
+
+      } catch (error) {
+        contenedor.innerHTML = '<div class="estado-vacio"><div class="icono-vacio">❌</div><p>Error al cargar las reservas</p></div>';
+      }
+    };
+
+    // ── HORARIO VISUAL ───────────────────────────────────────
+    const mostrarHorarioVisual = (reservas, fecha) => {
+      const card = document.getElementById('card-horario');
+      const contenedor = document.getElementById('horario-visual');
+      const hoy = new Date().toISOString().split('T')[0];
+
+      const fechaFormateada = new Date(fecha + 'T12:00:00')
+        .toLocaleDateString('es-CO', {
+          weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
+        });
+
+      document.getElementById('fecha-horario-label').textContent = fechaFormateada;
+      card.style.display = 'block';
+
+      const reservasActivas = reservas.filter(function(r) { return r.estado === 'activa'; });
+
+      const estaOcupada = (f) =>
+        reservasActivas.some(function(r) { return f >= r.horaInicio && f < r.horaFin; });
+
+      const reservaDeFranja = (f) =>
+        reservasActivas.find(function(r) { return f >= r.horaInicio && f < r.horaFin; });
+
+      const franjasAM = FRANJAS.filter(function(f) { return parseInt(f) < 12; });
+      const franjasPM = FRANJAS.filter(function(f) { return parseInt(f) >= 12; });
+
+      const renderFila = (franjas) => {
+        let celdas = '';
+        franjas.forEach(function(franja) {
+          const ocupada = estaOcupada(franja);
+          const pasado = fecha === hoy && yaEsPasado(fecha, franja);
+          const reserva = reservaDeFranja(franja);
+
+          let tooltip = 'Disponible';
+          if (ocupada && reserva) tooltip = reserva.nombreSolicitante + ' (' + aAMPM(reserva.horaInicio) + ' - ' + aAMPM(reserva.horaFin) + ')';
+          else if (pasado) tooltip = 'Hora pasada';
+
+          const bg = ocupada ? '#fee2e2' : pasado ? '#f3f4f6' : '#d1fae5';
+          const color = ocupada ? '#991b1b' : pasado ? '#9ca3af' : '#065f46';
+          const border = ocupada ? '#fca5a5' : pasado ? '#d1d5db' : '#6ee7b7';
+          const icono = ocupada ? '🔴' : pasado ? '⬜' : '🟢';
+
+          celdas += '<td title="' + tooltip + '" style="padding:4px;">'
+            + '<div style="background:' + bg + '; color:' + color + '; border:1px solid ' + border + '; border-radius:6px; padding:6px 8px; font-size:0.72rem; font-weight:600; white-space:nowrap; text-align:center;">'
+            + icono + ' ' + aAMPM(franja)
+            + '</div></td>';
+        });
+        return celdas;
+      };
+
+      contenedor.innerHTML = '<div style="overflow-x:auto;">'
+        + '<table style="border-collapse:collapse;">'
+        + '<tr>'
+        + '<td style="padding:4px 12px 4px 0; font-weight:700; color:#6b7280; font-size:0.75rem; white-space:nowrap; vertical-align:middle;">☀️ AM</td>'
+        + renderFila(franjasAM)
+        + '</tr>'
+        + '<tr><td colspan="100" style="height:8px;"></td></tr>'
+        + '<tr>'
+        + '<td style="padding:4px 12px 4px 0; font-weight:700; color:#6b7280; font-size:0.75rem; white-space:nowrap; vertical-align:middle;">🌙 PM</td>'
+        + renderFila(franjasPM)
+        + '</tr>'
+        + '</table></div>'
+        + '<div class="usuario-leyenda mt-3 mb-0">'
+        + '<span class="usuario-leyenda-item"><span class="usuario-leyenda-swatch" style="background:#d1fae5;border:1px solid #6ee7b7;"></span>Disponible</span>'
+        + '<span class="usuario-leyenda-item"><span class="usuario-leyenda-swatch" style="background:#fee2e2;border:1px solid #fca5a5;"></span>Ocupado</span>'
+        + '<span class="usuario-leyenda-item"><span class="usuario-leyenda-swatch" style="background:#f3f4f6;border:1px solid #d1d5db;"></span>Hora pasada</span>'
+        + '<span class="usuario-leyenda-hint">Pasa el cursor sobre una franja para ver el detalle.</span>'
+        + '</div>';
+    };
+
+    // ── ABRIR MODAL ──────────────────────────────────────────
+    const abrirModalReserva = () => {
+      document.getElementById('reserva-nombre').value = usuario.nombreCompleto;
+      document.getElementById('reserva-motivo').value = '';
+      document.getElementById('reserva-hora-fin').innerHTML = '<option value="">Selecciona hora...</option>';
+
+      const fechaFiltro = document.getElementById('filtro-fecha').value;
+      const hoy = new Date().toISOString().split('T')[0];
+      const fechaModal = fechaFiltro || hoy;
+
+      document.getElementById('reserva-fecha').value = fechaModal;
+      llenarSelectInicio(fechaModal);
+
+      new bootstrap.Modal(document.getElementById('modalReserva')).show();
+    };
+
+    // ── GUARDAR RESERVA ──────────────────────────────────────
+    const guardarReserva = async () => {
+      const nombreSolicitante = document.getElementById('reserva-nombre').value.trim();
+      const fecha = document.getElementById('reserva-fecha').value;
+      const horaInicio = document.getElementById('reserva-hora-inicio').value;
+      const horaFin = document.getElementById('reserva-hora-fin').value;
+      const motivo = document.getElementById('reserva-motivo').value.trim();
+
+      if (!nombreSolicitante || !fecha || !horaInicio || !horaFin || !motivo) {
+        mostrarNotificacion('Por favor completa todos los campos', 'advertencia');
+        return;
+      }
+
+      // Validación: la hora de inicio no puede ser en el pasado
+      if (yaEsPasado(fecha, horaInicio)) {
+        mostrarNotificacion('No puedes reservar en una fecha u hora que ya pasó', 'advertencia');
+        return;
+      }
+
+      try {
+        await reservasAPI.crear({ nombreSolicitante, fecha, horaInicio, horaFin, motivo });
+        mostrarNotificacion('¡Reserva creada correctamente!', 'exito');
+        bootstrap.Modal.getInstance(document.getElementById('modalReserva')).hide();
+        document.getElementById('filtro-fecha').value = fecha;
+        cargarReservas();
+      } catch (error) {
+        mostrarNotificacion(error.message, 'error');
+      }
+    };
+
+    // ── CANCELAR RESERVA ─────────────────────────────────────
+    const confirmarCancelar = (id) => {
+      if (confirm('¿Estás seguro que deseas cancelar esta reserva?')) {
+        cancelarReserva(id);
+      }
+    };
+
+    const cancelarReserva = async (id) => {
+      try {
+        await reservasAPI.cancelar(id);
+        mostrarNotificacion('Reserva cancelada correctamente', 'exito');
+        cargarReservas();
+      } catch (error) {
+        mostrarNotificacion(error.message, 'error');
+      }
+    };
+
+    verHoy();
+
+    // ── AUTO-REFRESH CADA 15 SEGUNDOS ────────────────────────
+    setInterval(() => {
+      if (document.getElementById('filtro-fecha').value) {
+        cargarReservas();
+      }
+    }, 15000);
+
+  </script>
+
+</body>
+</html>

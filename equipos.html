@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sistema Biblioteca — Equipos</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+
+  <!-- ── SIDEBAR ─────────────────────────────────────────── -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <div class="icon-biblioteca">
+        <img src="img/LOGO-SENA.jpg" alt="Logo SENA" class="sidebar-logo-img" />
+      </div>
+      <h4>Biblioteca SENA</h4>
+      <p>Sistema de Gestión</p>
+    </div>
+    <nav>
+      <a href="index.html">
+        <span class="icono">
+          <img src="img/logo-dashboard.png" alt="Dashboard" class="sidebar-icon-img" />
+        </span>Dashboard
+      </a>
+      <a href="equipos.html" class="activo">
+        <span class="icono">
+          <img src="img/logo-equipos.png" alt="Equipos" class="sidebar-icon-img" />
+        </span>Equipos
+      </a>
+      <a href="prestamos.html">
+        <span class="icono">
+          <img src="img/logo-prestamos.png" alt="Préstamos" class="sidebar-icon-img" />
+        </span>Préstamos
+      </a>
+      <a href="prestamos-aprendices.html">
+        <span class="icono">
+          <img src="img/logo-prestamos.png" alt="Préstamos Aprendices" class="sidebar-icon-img" />
+        </span>Préstamos Aprendices
+      </a>
+      <a href="reservas.html">
+        <span class="icono">
+          <img src="img/logo-calendario.png" alt="Reservas de Sala" class="sidebar-icon-img" />
+        </span>Reservas de Sala
+      </a>
+      <a href="usuarios.html">
+        <span class="icono">
+          <img src="img/logo-dashboard.png" alt="Usuarios" class="sidebar-icon-img" />
+        </span>Usuarios
+      </a>
+      <a href="#" onclick="cerrarSesionAdmin()">
+        <span class="icono">
+          <img src="img/icon-cerrarsecion.png" alt="Cerrar Sesión" class="sidebar-icon-img" />
+        </span>Cerrar Sesión
+      </a>
+    </nav>
+  </aside>
+
+  <!-- ── CONTENIDO PRINCIPAL ─────────────────────────────── -->
+  <main class="contenido-principal admin-page">
+
+    <header class="admin-page-hero">
+      <div class="admin-page-hero-text">
+        <h1>Gestión de equipos</h1>
+        <p>Administra los equipos disponibles en la biblioteca</p>
+      </div>
+      <div class="admin-page-hero-actions">
+        <button type="button" class="btn btn-primary" onclick="abrirModalCrear()">+ Nuevo equipo</button>
+      </div>
+    </header>
+
+    <!-- Filtros -->
+    <div class="card-custom admin-toolbar mb-4">
+      <div class="card-body-custom">
+        <div class="row g-3 align-items-end">
+          <div class="col-md-4">
+            <label class="form-label fw-semibold">Filtrar por estado</label>
+            <select class="form-select" id="filtro-estado" onchange="cargarEquipos()">
+              <option value="">Todos los estados</option>
+              <option value="disponible">✅ Disponible</option>
+              <option value="prestado">🔴 Prestado</option>
+              <option value="mantenimiento">⚠️ Mantenimiento</option>
+            </select>
+          </div>
+          <div class="col-md-4">
+            <label class="form-label fw-semibold">Filtrar por tipo</label>
+            <select class="form-select" id="filtro-tipo" onchange="cargarEquipos()">
+              <option value="">Todos los tipos</option>
+              <option value="computador_portatil">💻 Computador Portátil</option>
+              <option value="video_beam">📽️ Video Beam</option>
+            </select>
+          </div>
+          <div class="col-md-4">
+            <button class="btn btn-outline-secondary w-100" onclick="limpiarFiltros()">
+              🔄 Limpiar filtros
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tabla de equipos -->
+    <div class="card-custom admin-section-card">
+      <div class="card-header-custom">
+        <h5>Lista de equipos</h5>
+        <span id="contador-equipos" class="admin-meta"></span>
+      </div>
+      <div id="contenedor-equipos">
+        <div class="loading">
+          <div class="spinner"></div>
+          <p>Cargando equipos...</p>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- ── MODAL CREAR / EDITAR EQUIPO ─────────────────────── -->
+  <div class="modal fade" id="modalEquipo" tabindex="-1">
+    <div class="modal-dialog">
+      <div class="modal-content modal-sena">
+
+        <div class="modal-header">
+          <h5 class="modal-title fw-bold" id="titulo-modal">Nuevo Equipo</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+
+        <div class="modal-body p-4">
+          <input type="hidden" id="equipo-id" />
+
+          <div class="mb-3">
+            <label class="form-label fw-semibold">
+              Nombre del equipo <span class="text-danger">*</span>
+            </label>
+            <input
+              type="text"
+              class="form-control"
+              id="equipo-nombre"
+              placeholder="Ej: Portátil HP EliteBook"
+            />
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label fw-semibold">
+              Tipo de equipo <span class="text-danger">*</span>
+            </label>
+            <select class="form-select" id="equipo-tipo">
+              <option value="">Selecciona un tipo...</option>
+              <option value="computador_portatil">💻 Computador Portátil</option>
+              <option value="video_beam">📽️ Video Beam</option>
+            </select>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label fw-semibold">
+              Serial <span class="text-danger">*</span>
+            </label>
+            <input
+              type="text"
+              class="form-control"
+              id="equipo-serial"
+              placeholder="Ej: HP-2024-001"
+            />
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Descripción</label>
+            <textarea
+              class="form-control"
+              id="equipo-descripcion"
+              rows="3"
+              placeholder="Características del equipo (opcional)"
+            ></textarea>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+            Cancelar
+          </button>
+          <button type="button" class="btn btn-primary" onclick="guardarEquipo()">
+            Guardar Equipo
+          </button>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- ── MODAL CAMBIAR ESTADO ─────────────────────────────── -->
+  <div class="modal fade" id="modalEstado" tabindex="-1">
+    <div class="modal-dialog modal-sm">
+      <div class="modal-content modal-sena">
+
+        <div class="modal-header">
+          <h5 class="modal-title fw-bold">Cambiar Estado</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+
+        <div class="modal-body p-4">
+          <input type="hidden" id="estado-equipo-id" />
+          <p class="mb-3 text-muted small">
+            Selecciona el nuevo estado para el equipo:
+          </p>
+          <div class="d-grid gap-2">
+            <button class="btn btn-outline-success" onclick="cambiarEstado('disponible')">
+              ✅ Disponible
+            </button>
+            <button class="btn btn-outline-danger" onclick="cambiarEstado('prestado')">
+              🔴 Prestado
+            </button>
+            <button class="btn btn-outline-warning" onclick="cambiarEstado('mantenimiento')">
+              ⚠️ Mantenimiento
+            </button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- Bootstrap JS -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="js/api.js"></script>
+  <script>
+    // ── VERIFICAR SESIÓN ADMIN ───────────────────────────────
+    const token = sessionStorage.getItem('token');
+    const usuarioData = sessionStorage.getItem('usuario');
+    if (!token || !usuarioData) { window.location.href = 'login.html'; throw new Error('Sin sesión'); }
+    const usuarioActual = JSON.parse(usuarioData);
+    if (usuarioActual.rol !== 'admin') { window.location.href = 'usuario/index.html'; throw new Error('No es admin'); }
+
+    const cerrarSesionAdmin = () => {
+      if (confirm('¿Estás seguro que deseas cerrar sesión?')) {
+        sessionStorage.removeItem('token');
+        sessionStorage.removeItem('usuario');
+        window.location.href = 'login.html';
+      }
+    };
+
+    // ── CARGAR Y RENDERIZAR EQUIPOS ──────────────────────────
+    const cargarEquipos = async () => {
+      const contenedor = document.getElementById('contenedor-equipos');
+      contenedor.innerHTML = `
+        <div class="loading">
+          <div class="spinner"></div>
+          <p>Cargando equipos...</p>
+        </div>`;
+
+      try {
+        const estado = document.getElementById('filtro-estado').value;
+        const tipo = document.getElementById('filtro-tipo').value;
+
+        const filtros = {};
+        if (estado) filtros.estado = estado;
+        if (tipo) filtros.tipo = tipo;
+
+        const respuesta = await equiposAPI.listar(filtros);
+        const equipos = respuesta.data;
+
+        document.getElementById('contador-equipos').textContent =
+          `${respuesta.total} equipo(s) encontrado(s)`;
+
+        if (equipos.length === 0) {
+          contenedor.innerHTML = `
+            <div class="estado-vacio">
+              <div class="icono-vacio">📭</div>
+              <p>No hay equipos que coincidan con los filtros</p>
+            </div>`;
+          return;
+        }
+
+        contenedor.innerHTML = `
+          <table class="tabla-custom">
+            <thead>
+              <tr>
+                <th>Nombre</th>
+                <th>Tipo</th>
+                <th>Serial</th>
+                <th>Descripción</th>
+                <th>Estado</th>
+                <th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${equipos.map(equipo => `
+                <tr>
+                  <td><strong>${equipo.nombre}</strong></td>
+                  <td>
+                    ${equipo.tipo === 'computador_portatil'
+                      ? '💻 Portátil'
+                      : '📽️ Video Beam'}
+                  </td>
+                  <td><code>${equipo.serial}</code></td>
+                  <td style="color:#6b7280;">
+                    ${equipo.descripcion || '—'}
+                  </td>
+                  <td>${badgeEstado(equipo.estado)}</td>
+                  <td>
+                    <div class="d-flex gap-2">
+                      <button
+                        class="btn btn-sm btn-outline-primary"
+                        onclick="abrirModalEditar('${equipo._id}')"
+                        title="Editar"
+                      >✏️</button>
+                      <button
+                        class="btn btn-sm btn-outline-warning"
+                        onclick="abrirModalEstado('${equipo._id}')"
+                        title="Cambiar estado"
+                      >🔄</button>
+                      <button
+                        class="btn btn-sm btn-outline-danger"
+                        onclick="confirmarEliminar('${equipo._id}', '${equipo.nombre}')"
+                        title="Eliminar"
+                      >🗑️</button>
+                    </div>
+                  </td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>`;
+
+      } catch (error) {
+        contenedor.innerHTML = `
+          <div class="estado-vacio">
+            <div class="icono-vacio">❌</div>
+            <p>Error al cargar los equipos. ¿Está el servidor corriendo?</p>
+          </div>`;
+      }
+    };
+
+    // ── ABRIR MODAL PARA CREAR ───────────────────────────────
+    const abrirModalCrear = () => {
+      document.getElementById('equipo-id').value = '';
+      document.getElementById('equipo-nombre').value = '';
+      document.getElementById('equipo-tipo').value = '';
+      document.getElementById('equipo-serial').value = '';
+      document.getElementById('equipo-descripcion').value = '';
+      document.getElementById('titulo-modal').textContent = 'Nuevo Equipo';
+
+      new bootstrap.Modal(document.getElementById('modalEquipo')).show();
+    };
+
+    // ── ABRIR MODAL PARA EDITAR ──────────────────────────────
+    const abrirModalEditar = async (id) => {
+      try {
+        const respuesta = await equiposAPI.obtener(id);
+        const equipo = respuesta.data;
+
+        document.getElementById('equipo-id').value = equipo._id;
+        document.getElementById('equipo-nombre').value = equipo.nombre;
+        document.getElementById('equipo-tipo').value = equipo.tipo;
+        document.getElementById('equipo-serial').value = equipo.serial;
+        document.getElementById('equipo-descripcion').value = equipo.descripcion || '';
+        document.getElementById('titulo-modal').textContent = 'Editar Equipo';
+
+        new bootstrap.Modal(document.getElementById('modalEquipo')).show();
+      } catch (error) {
+        mostrarNotificacion('Error al cargar los datos del equipo', 'error');
+      }
+    };
+
+    // ── GUARDAR EQUIPO (CREAR O EDITAR) ──────────────────────
+    const guardarEquipo = async () => {
+      const id = document.getElementById('equipo-id').value;
+      const nombre = document.getElementById('equipo-nombre').value.trim();
+      const tipo = document.getElementById('equipo-tipo').value;
+      const serial = document.getElementById('equipo-serial').value.trim();
+      const descripcion = document.getElementById('equipo-descripcion').value.trim();
+
+      if (!nombre || !tipo || !serial) {
+        mostrarNotificacion('Por favor completa todos los campos obligatorios', 'advertencia');
+        return;
+      }
+
+      try {
+        if (id) {
+          await equiposAPI.actualizar(id, { nombre, tipo, serial, descripcion });
+          mostrarNotificacion('Equipo actualizado correctamente', 'exito');
+        } else {
+          await equiposAPI.crear({ nombre, tipo, serial, descripcion });
+          mostrarNotificacion('Equipo creado correctamente', 'exito');
+        }
+
+        bootstrap.Modal.getInstance(document.getElementById('modalEquipo')).hide();
+        cargarEquipos();
+
+      } catch (error) {
+        mostrarNotificacion(error.message, 'error');
+      }
+    };
+
+    // ── ABRIR MODAL CAMBIAR ESTADO ───────────────────────────
+    const abrirModalEstado = (id) => {
+      document.getElementById('estado-equipo-id').value = id;
+      new bootstrap.Modal(document.getElementById('modalEstado')).show();
+    };
+
+    // ── CAMBIAR ESTADO ───────────────────────────────────────
+    const cambiarEstado = async (nuevoEstado) => {
+      const id = document.getElementById('estado-equipo-id').value;
+      try {
+        await equiposAPI.cambiarEstado(id, nuevoEstado);
+        mostrarNotificacion(`Estado cambiado a "${nuevoEstado}"`, 'exito');
+        bootstrap.Modal.getInstance(document.getElementById('modalEstado')).hide();
+        cargarEquipos();
+      } catch (error) {
+        mostrarNotificacion(error.message, 'error');
+      }
+    };
+
+    // ── CONFIRMAR Y ELIMINAR ─────────────────────────────────
+    const confirmarEliminar = (id, nombre) => {
+      if (confirm(`¿Estás seguro de eliminar el equipo "${nombre}"? Esta acción no se puede deshacer.`)) {
+        eliminarEquipo(id);
+      }
+    };
+
+    const eliminarEquipo = async (id) => {
+      try {
+        await equiposAPI.eliminar(id);
+        mostrarNotificacion('Equipo eliminado correctamente', 'exito');
+        cargarEquipos();
+      } catch (error) {
+        mostrarNotificacion(error.message, 'error');
+      }
+    };
+
+    // ── LIMPIAR FILTROS ──────────────────────────────────────
+    const limpiarFiltros = () => {
+      document.getElementById('filtro-estado').value = '';
+      document.getElementById('filtro-tipo').value = '';
+      cargarEquipos();
+    };
+
+    cargarEquipos();
+
+    // ── AUTO-REFRESH CADA 15 SEGUNDOS ────────────────────────
+    setInterval(cargarEquipos, 15000);
+
+  </script>
+
+</body>
+</html>
